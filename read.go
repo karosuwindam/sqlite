@@ -8,7 +8,8 @@ import (
 	"time"
 )
 
-type KeyWordOption string //検索オプション
+//KeyWordOption 検索オプション
+type KeyWordOption string
 
 //検索オプションの値
 //
@@ -17,12 +18,13 @@ type KeyWordOption string //検索オプション
 //AND_Like keyword like %keyword% and
 //OR_LIKE keyword like %keyword% or
 const (
-	AND      KeyWordOption = "and"
-	OR       KeyWordOption = "or"
-	AND_Like KeyWordOption = "and_like"
-	OR_Like  KeyWordOption = "or_like"
+	AND     KeyWordOption = "and"
+	OR      KeyWordOption = "or"
+	ANDLike KeyWordOption = "and_like"
+	ORLike  KeyWordOption = "or_like"
 )
 
+// Read()
 func (t *sqliteConfig) Read(tname string, stu interface{}, slice interface{}, v map[string]string, keytype KeyWordOption) error {
 	cmd, err := createReadCmd(tname, stu, v, keytype)
 	if err != nil {
@@ -52,6 +54,7 @@ func (t *sqliteConfig) Read(tname string, stu interface{}, slice interface{}, v 
 	return err
 }
 
+// createReadCmd(tname,stu)
 func createReadCmd(tname string, stu interface{}, keyword map[string]string, keytype KeyWordOption) (string, error) {
 	rt := reflect.TypeOf(stu)
 	if rt.Kind() == reflect.UnsafePointer {
@@ -69,6 +72,7 @@ func createReadCmd(tname string, stu interface{}, keyword map[string]string, key
 
 }
 
+// sqlite3RowsReadData
 func sqlite3RowsReadData(slice interface{}) ([]interface{}, error) {
 	sv := reflect.ValueOf(slice)
 	if sv.Type().Kind() != reflect.Ptr {
@@ -110,6 +114,7 @@ func sqlite3RowsReadData(slice interface{}) ([]interface{}, error) {
 	return output, nil
 }
 
+// silceToMap
 func silceToMap(silce []interface{}, stu interface{}) (map[string]interface{}, error) {
 	output := map[string]interface{}{}
 	if len(silce) == 0 {
@@ -147,30 +152,10 @@ func silceToMap(silce []interface{}, stu interface{}) (map[string]interface{}, e
 			}
 		}
 	}
-	// endcount := 0
-	// for i := 0; i < ckStruct.NumField(); i++ {
-	// 	f := ckStruct.Field(i)
-
-	// 	if i >= len(silce) {
-	// 		break
-	// 	}
-	// 	if f.Type.Kind() == reflect.Int64 {
-	// 		output[f.Name] = silce[i].(int)
-
-	// 	} else {
-	// 		output[f.Name] = silce[i]
-
-	// 	}
-	// 	endcount = i
-	// }
-	// endcount++
-	// if len(silce[endcount:]) == 2 {
-	// 	output["create_at"] = silce[len(silce)-2]
-	// 	output["update_at"] = silce[len(silce)-1]
-	// }
 	return output, nil
 }
 
+// convertCmd
 func convertCmd(stu interface{}, keyword map[string]string, keytype KeyWordOption) string {
 	output := ""
 	if stu == nil {
@@ -183,9 +168,9 @@ func convertCmd(stu interface{}, keyword map[string]string, keytype KeyWordOptio
 		if keyword[f.Tag.Get("db")] != "" {
 			if count != 0 {
 				switch keytype {
-				case AND_Like:
+				case ANDLike:
 					output += " " + string(AND) + " "
-				case OR_Like:
+				case ORLike:
 					output += " " + string(OR) + " "
 				default:
 					output += " " + string(keytype) + " "
@@ -216,6 +201,7 @@ func convertCmd(stu interface{}, keyword map[string]string, keytype KeyWordOptio
 	return output
 }
 
+// mapToStruct
 func mapToStruct(s map[string]interface{}, i interface{}) error {
 
 	sv := reflect.ValueOf(i)

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"math/rand"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -44,22 +45,15 @@ func TestDelete(t *testing.T) {
 		deleteid = rand.Intn(20)
 	}
 	t.Logf("-----------delete id=%v ---------------", deleteid)
-	err := sql.Delete(testtablename, deleteid)
-	if err != nil {
+	if err := sql.Delete(testtablename, deleteid); err != nil {
 		t.Error(err.Error())
 		t.FailNow()
 	}
 
 	rdata := []TableTest{}
-	_ = sql.Read(testtablename, TableTest{}, &rdata, map[string]string{}, AND)
-	flag := false
-	for _, str := range rdata {
-		if str.Id == deleteid {
-			flag = true
-			break
-		}
-	}
-	if flag {
+	_ = sql.Read(testtablename, TableTest{}, &rdata, map[string]string{"id": strconv.Itoa(deleteid)}, AND)
+
+	if len(rdata) != 0 {
 		t.Errorf("No Delete data id=%v", deleteid)
 	}
 	t.Log("-----------delete CHECK END ---------------")
