@@ -6,18 +6,24 @@ import (
 	"strings"
 )
 
+// ifnot
+//
+// SQLコマンド作成時でＩＦ　EXISTSをつけるフラグ
 type ifnot bool
 
 const (
-	ifnot_off ifnot = false
-	ifnot_on  ifnot = true
+	ifnotOff ifnot = false
+	ifnotOn  ifnot = true
 )
 
 const (
-	TimeLayout  = "2006-01-02 15:04:05.999999999"
+	// TimeLayout String変換用テンプレート
+	TimeLayout = "2006-01-02 15:04:05.999999999"
+	// TimeLayout2 String変換用テンプレート
 	TimeLayout2 = "2006-01-02 15:04:05.999999 +0000 UTC"
 )
 
+// CreateTable
 func (t *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 	var cmd string
 	backcmd, err := t.ReadCreateTableCmd(tname)
@@ -25,7 +31,7 @@ func (t *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 		return err
 	}
 	if backcmd != "" { //tableが作成済み
-		cmd, err = createTableCmd(tname, stu, ifnot_off)
+		cmd, err = createTableCmd(tname, stu, ifnotOff)
 		if err != nil {
 			return err
 		}
@@ -43,7 +49,7 @@ func (t *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 		}
 
 	} else { //tableが作成していない
-		cmd, err = createTableCmd(tname, stu, ifnot_on)
+		cmd, err = createTableCmd(tname, stu, ifnotOn)
 		if err != nil {
 			return err
 		}
@@ -54,6 +60,7 @@ func (t *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 	return err
 }
 
+// ReadTableList
 func (t *sqliteConfig) ReadTableList() ([]string, error) {
 	var output []string
 	cmd, err := readTableAllCmd()
@@ -77,6 +84,7 @@ func (t *sqliteConfig) ReadTableList() ([]string, error) {
 	return output, err
 }
 
+// ReadCreateTableCmd
 func (t *sqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
 	var output string
 	cmd, err := readCreateTableCmd(tname)
@@ -99,6 +107,7 @@ func (t *sqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
 
 }
 
+// DropTable
 func (t *sqliteConfig) DropTable(tname string) error {
 	cmd, err := dropTableCmd(tname)
 	if err != nil {
@@ -109,9 +118,10 @@ func (t *sqliteConfig) DropTable(tname string) error {
 
 }
 
+// createTableCmd
 func createTableCmd(tname string, stu interface{}, flag ifnot) (string, error) {
 	cmd := "CREATE TABLE" + " "
-	if flag == ifnot_on {
+	if flag == ifnotOn {
 		cmd += "IF NOT EXISTS" + " "
 	}
 	if tname == "" {
@@ -155,25 +165,32 @@ func createTableCmd(tname string, stu interface{}, flag ifnot) (string, error) {
 
 }
 
-func altertableCmd(tname, cmd_a, cmd_b string) []string {
+// altertableCmd
+// 追加作成用のテーブルを作るコマンド
+//
+// :ToDo
+func altertableCmd(tname, cmdA, cmdB string) []string {
 	var output []string
 	//ALTER TABLE tbl_name ADD COLUMN new_col VARCHAR(10) AFTER col1;
 
 	return output
 }
 
+// dropTableCmd
 func dropTableCmd(tname string) (string, error) {
 	cmd := "DROP TABLE IF EXISTS" + " '" + tname + "'"
 	return cmd, nil
 
 }
 
+// readTableAllCmd
 func readTableAllCmd() (string, error) {
 	cmd := "SELECT name FROM sqlite_master WHERE type='table'"
 	return cmd, nil
 
 }
 
+// readCreateTableCmd
 func readCreateTableCmd(tname string) (string, error) {
 	cmd := "SELECT sql FROM sqlite_master WHERE type='table' AND name='" + tname + "'"
 	return cmd, nil
