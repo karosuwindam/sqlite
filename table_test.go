@@ -30,7 +30,7 @@ func TestCreateTable(t *testing.T) {
 	defer sql.Close()
 
 	t.Log("----------- table create cmd ---------------")
-	str, err := createTableCmd(testtablename, TableTest{}, ifnot_on)
+	str, err := createTableCmd(testtablename, TableTest{}, ifnotOn)
 	if err != nil {
 		t.Errorf("%v", err.Error())
 	}

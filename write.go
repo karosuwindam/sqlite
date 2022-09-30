@@ -7,11 +7,12 @@ import (
 	"time"
 )
 
+// Add
 func (cfg *sqliteConfig) Add(tname string, tabledatap interface{}) error {
-	cangeDbId(cfg.sqlite3IdMax(tname), tabledatap)
+	cangeDbID(cfg.sqlite3IdMax(tname), tabledatap)
 	tabledata := reflect.ValueOf(tabledatap).Elem().Interface()
 
-	cmd, err := createaddCmdById(tname, tabledata)
+	cmd, err := createaddCmdByID(tname, tabledata)
 	if err != nil {
 		return err
 	}
@@ -19,11 +20,12 @@ func (cfg *sqliteConfig) Add(tname string, tabledatap interface{}) error {
 	return err
 }
 
+// createaddCmdByID()
 // 挿入するコマンドを作成
-func createaddCmdById(tname string, tabledata interface{}) (string, error) {
+func createaddCmdByID(tname string, tabledata interface{}) (string, error) {
 	cmd := "INSERT INTO " + tname + " "
-	cmd_colume := ""
-	cmd_vaule := ""
+	cmdColume := ""
+	cmdVaule := ""
 	now := time.Now()
 	st := reflect.TypeOf(tabledata)
 	sv := reflect.ValueOf(tabledata)
@@ -33,35 +35,34 @@ func createaddCmdById(tname string, tabledata interface{}) (string, error) {
 		if key := ft.Tag.Get("db"); key != "" {
 			fvi := fv.Interface()
 			if i != 0 {
-				cmd_colume += ","
-				cmd_vaule += ","
+				cmdColume += ","
+				cmdVaule += ","
 			}
-			cmd_colume += key
+			cmdColume += key
 			switch fvi.(type) {
 			case int:
-				cmd_vaule += strconv.Itoa(fvi.(int))
+				cmdVaule += strconv.Itoa(fvi.(int))
 			case string:
-				cmd_vaule += "'" + fvi.(string) + "'"
+				cmdVaule += "'" + fvi.(string) + "'"
 			case time.Time:
-				cmd_vaule += "'" + fvi.(time.Time).Format(TimeLayout) + "'"
+				cmdVaule += "'" + fvi.(time.Time).Format(TimeLayout) + "'"
 			}
 		}
 	}
-	if cmd_colume == "" || cmd_vaule == "" {
+	if cmdColume == "" || cmdVaule == "" {
 		return "", errors.New("Don't created command")
-	} else {
-		cmd_colume += "," + "created_at"
-		cmd_vaule += "," + "'" + now.Format(TimeLayout) + "'"
-		cmd_colume += "," + "updated_at"
-		cmd_vaule += "," + "'" + now.Format(TimeLayout) + "'"
-		cmd += " (" + cmd_colume + ") " + "VALUES" + " (" + cmd_vaule + ")"
 	}
+	cmdColume += "," + "created_at"
+	cmdVaule += "," + "'" + now.Format(TimeLayout) + "'"
+	cmdColume += "," + "updated_at"
+	cmdVaule += "," + "'" + now.Format(TimeLayout) + "'"
+	cmd += " (" + cmdColume + ") " + "VALUES" + " (" + cmdVaule + ")"
 
 	return cmd, nil
 }
 
 //idを探して値を置き換える
-func cangeDbId(id int, tabledatap interface{}) {
+func cangeDbID(id int, tabledatap interface{}) {
 	if reflect.TypeOf(tabledatap).Kind() != reflect.Ptr || id < 0 {
 		return
 	}
