@@ -3,7 +3,7 @@ name: Create Git Tag
  on:
    push:
      branches:
-       - master
+       - main
  
  jobs:
    create_git_tag:
