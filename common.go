@@ -56,3 +56,27 @@ func mapToStruct(s map[string]interface{}, i interface{}) error {
 	v.Set(reflect.Append(v, out))
 	return nil
 }
+
+// cangeDbID(id,tabledatap)
+//
+// 構造体からidを探して任意の値に置き換える
+//
+// id(int) : 置き換える値
+// tabledatap(interface{}) : 置き換える構造体のポインタ
+func cangeDbID(id int, tabledatap interface{}) {
+	if reflect.TypeOf(tabledatap).Kind() != reflect.Ptr || id < 0 {
+		return
+	}
+	sv := reflect.ValueOf(tabledatap)
+	svi := sv.Elem().Interface()
+	st := reflect.TypeOf(svi)
+	for i := 0; i < st.NumField(); i++ {
+		ft := st.Field(i)
+		if key := ft.Tag.Get("db"); key != "" {
+			if key == "id" {
+				sv.Elem().FieldByName(ft.Name).SetInt(int64(id))
+				// fv.SetInt(int64(id))
+			}
+		}
+	}
+}

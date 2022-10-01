@@ -67,3 +67,27 @@ func TestCommonMapToStruct(t *testing.T) {
 	t.Log("------------------ Map To Struct OK -----------------")
 
 }
+
+func TestCommonCangeDbID(t *testing.T) {
+	type TableTest struct {
+		Id  int    `db:"id"`
+		Str string `db:"str"`
+		I   int    `db:"i"`
+	}
+	data := TableTest{Id: 30, Str: "data", I: 455}
+	cangeDbID(2, &data)
+	if data.Id != 2 {
+		t.Errorf("Don't change struct Id %v", data.Id)
+		t.FailNow()
+	}
+	if data.Str != "data" {
+		t.Errorf("Don't change struct Str %v", data.Str)
+		t.FailNow()
+	}
+	if data.I != 455 {
+		t.Errorf("Don't change struct I %v", data.I)
+		t.FailNow()
+	}
+
+	t.Log("------------------ Cange Db for ID OK -----------------")
+}

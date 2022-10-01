@@ -7,8 +7,42 @@ import (
 	"time"
 )
 
-// (*cfg)Add
+// (*cfg)AddOne(tname tabledatap) = error
+//
+// テーブルに追加する構造体のデータによって追加するテーブルを切り替える
+//
+// tname(string) : テーブル名
+// tabledatap(interface{}) :テーブルに追加する構造体データのポインタ
 func (cfg *sqliteConfig) Add(tname string, tabledatap interface{}) error {
+	pv := reflect.ValueOf(tabledatap)
+	if pv.Kind() != reflect.Ptr {
+		return errors.New("tabledatap input not pointer")
+	}
+	ppv := reflect.ValueOf(pv.Elem().Interface())
+	switch ppv.Kind() {
+	case reflect.Slice: //配列構造体の入力
+		return nil
+		pv := reflect.ValueOf(reflect.ValueOf(tabledatap).Elem().Interface())
+		for i := 0; i < pv.Len(); i++ {
+			f := pv.Index(i).Interface()
+			//以下の分で、構造体のポインタ渡しで失敗しているので
+			//ポインタの同じ構造体を作ってそっちに渡して動作するかテストを実施する。
+			cfg.addOne(tname, &f)
+		}
+		return nil
+	case reflect.Struct: //構造体の入力
+		return cfg.addOne(tname, tabledatap)
+	}
+	return nil
+}
+
+// (*cfg)addOne(tname tabledatap) = error
+//
+// SQLのテーブルにレコードを一つ追加する。
+//
+// tname(string) : テーブル名
+// tabledatap(interface{}) :テーブルに追加する構造体データのポインタ
+func (cfg *sqliteConfig) addOne(tname string, tabledatap interface{}) error {
 	cangeDbID(cfg.sqlite3IdMax(tname), tabledatap)
 	tabledata := reflect.ValueOf(tabledatap).Elem().Interface()
 
@@ -20,8 +54,12 @@ func (cfg *sqliteConfig) Add(tname string, tabledatap interface{}) error {
 	return err
 }
 
-// createaddCmdByID()
+// createaddCmdByID(tname, tabledata) = string, error
+//
 // 挿入するコマンドを作成
+//
+// tname(string) : テーブル名
+// tabledata(interface{}) : データを作成する構造体
 func createaddCmdByID(tname string, tabledata interface{}) (string, error) {
 	cmd := "INSERT INTO " + tname + " "
 	cmdColume := ""
@@ -61,27 +99,11 @@ func createaddCmdByID(tname string, tabledata interface{}) (string, error) {
 	return cmd, nil
 }
 
-//idを探して値を置き換える
-func cangeDbID(id int, tabledatap interface{}) {
-	if reflect.TypeOf(tabledatap).Kind() != reflect.Ptr || id < 0 {
-		return
-	}
-	sv := reflect.ValueOf(tabledatap)
-	svi := sv.Elem().Interface()
-	st := reflect.TypeOf(svi)
-	for i := 0; i < st.NumField(); i++ {
-		ft := st.Field(i)
-		if key := ft.Tag.Get("db"); key != "" {
-			if key == "id" {
-				sv.Elem().FieldByName(ft.Name).SetInt(int64(id))
-				// fv.SetInt(int64(id))
-			}
-		}
-	}
-}
-
-// (*cfg)sqlite3IdMax
-// idの値から最大値+1の値を設定
+// (*cfg)sqlite3IdMax(tname) = int
+//
+// 対象のSQLテーブルからKey名idの最大値に+1した値を返す
+//
+// tname : 対象のテーブル
 func (cfg *sqliteConfig) sqlite3IdMax(tname string) int {
 	id := 0
 	cmd := "select max(id) from " + string(tname)
