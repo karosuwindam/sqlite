@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Add
+// (*cfg)Add
 func (cfg *sqliteConfig) Add(tname string, tabledatap interface{}) error {
 	cangeDbID(cfg.sqlite3IdMax(tname), tabledatap)
 	tabledata := reflect.ValueOf(tabledatap).Elem().Interface()
@@ -80,6 +80,7 @@ func cangeDbID(id int, tabledatap interface{}) {
 	}
 }
 
+// (*cfg)sqlite3IdMax
 // idの値から最大値+1の値を設定
 func (cfg *sqliteConfig) sqlite3IdMax(tname string) int {
 	id := 0

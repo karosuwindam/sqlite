@@ -88,3 +88,72 @@ func TestCreateTable(t *testing.T) {
 	os.Remove(testdbname)
 
 }
+
+func TestTableCreateCmd(t *testing.T) {
+
+	type TableTest struct {
+		Id  int    `db:"id"`
+		Str string `db:"str"`
+		I   int    `db:"i"`
+	}
+
+	type TableTest1 struct {
+		Id   int    `db:"id"`
+		Str  string `db:"str"`
+		Strb string `db:"strb"`
+		I    int    `db:"i"`
+		B    int    `db:"b"`
+		C    int    `db:"c"`
+	}
+
+	tname := "test"
+	testdbname := "test.db"
+
+	sql := Setup(testdbname)
+	_ = sql.Open()
+	defer sql.Close()
+
+	t.Log("----------- table cmd check ---------------")
+	cmdA, err := createTableCmd(tname, TableTest{}, ifnotOn)
+	if err != nil {
+		t.Error("Do not created cmd")
+		t.FailNow()
+	}
+	cmdB, err := createTableCmd(tname, TableTest1{}, ifnotOn)
+	if err != nil {
+		t.Error("Do not created cmd")
+		t.FailNow()
+	}
+	output := altertableCmd(cmdA, cmdB)
+	if len(output) == 0 && cmdA == cmdB {
+		t.Error("")
+		t.FailNow()
+	}
+	t.Log("----------- table cmd check OK ---------------")
+	t.Log("----------- table create ---------------")
+	err = sql.CreateTable(tname, TableTest{})
+	if err != nil {
+		t.Errorf("%v", err.Error())
+	}
+	defer os.Remove(testdbname)
+
+	t.Log("----------- table read ---------------")
+	cmd, err1 := sql.ReadCreateTableCmd(tname)
+	if err1 != nil {
+		t.Errorf("%v", err1.Error())
+	}
+	t.Logf("cmd:%v", cmd)
+
+	t.Log("----------- table create ---------------")
+	err = sql.CreateTable(tname, TableTest1{})
+	if err != nil {
+		t.Errorf("%v", err.Error())
+	}
+
+	t.Log("----------- table read ---------------")
+	cmd, err1 = sql.ReadCreateTableCmd(tname + "_tmp")
+	if err1 != nil {
+		t.Errorf("%v", err1.Error())
+	}
+	t.Logf("cmd:%v", cmd)
+}

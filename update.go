@@ -7,18 +7,18 @@ import (
 	"time"
 )
 
-// Update(tname str) = error
+// (*cfg)Update(tname str) = error
 //
 // SQLiteのデータベースから登録してあるデータを書き換える
 //
 // tname(string) : 対象のテーブル名
 // str(interface{}) : データを書き換えるための構造体
-func (sql *sqliteConfig) Update(tname string, str interface{}) error {
+func (cfg *sqliteConfig) Update(tname string, str interface{}) error {
 	cmd := createUpdateCmd(tname, str)
 	if cmd == "" {
 		return errors.New("Don't create updata cmd")
 	}
-	_, err := sql.db.Exec(cmd)
+	_, err := cfg.db.Exec(cmd)
 	return err
 }
 

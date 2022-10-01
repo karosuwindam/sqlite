@@ -2,18 +2,18 @@ package sqlite
 
 import "strconv"
 
-//Delete(tname,id)
+// (*cfg)Delete(tname,id)
 //
 // SQLのテーブルからid指定で削除する
 //
 // tname:id指定するための参照テーブル
 // id:削除指定を出すID
-func (t *sqliteConfig) Delete(tname string, id int) error {
+func (cfg *sqliteConfig) Delete(tname string, id int) error {
 	cmd, err := createDelCmd(tname, id)
 	if err != nil {
 		return err
 	}
-	_, err = t.db.Exec(cmd)
+	_, err = cfg.db.Exec(cmd)
 	return err
 
 }
