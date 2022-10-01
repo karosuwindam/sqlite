@@ -51,7 +51,7 @@ func TestDelete(t *testing.T) {
 	}
 
 	rdata := []TableTest{}
-	_ = sql.Read(testtablename, TableTest{}, &rdata, map[string]string{"id": strconv.Itoa(deleteid)}, AND)
+	_ = sql.Read(testtablename, &rdata, map[string]string{"id": strconv.Itoa(deleteid)}, AND)
 
 	if len(rdata) != 0 {
 		t.Errorf("No Delete data id=%v", deleteid)

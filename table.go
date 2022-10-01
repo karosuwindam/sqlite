@@ -23,7 +23,12 @@ const (
 	TimeLayout2 = "2006-01-02 15:04:05.999999 +0000 UTC"
 )
 
-// CreateTable
+// CreateTable(tname, stu) = error
+//
+// SQL内にテーブルを作成する
+//
+// tname(string) : 作成するテーブル名
+// stu(interface{}) : 作成するテーブル内の構造体
 func (t *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 	var cmd string
 	backcmd, err := t.ReadCreateTableCmd(tname)
@@ -60,7 +65,9 @@ func (t *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 	return err
 }
 
-// ReadTableList
+// ReadTableList() = []string, error
+//
+// SQL内のテーブル名を取得
 func (t *sqliteConfig) ReadTableList() ([]string, error) {
 	var output []string
 	cmd, err := readTableAllCmd()
@@ -84,7 +91,11 @@ func (t *sqliteConfig) ReadTableList() ([]string, error) {
 	return output, err
 }
 
-// ReadCreateTableCmd
+// ReadCreateTableCmd(tname) = string, error
+//
+// SQL内の作成したテーブルのコマンド情報を取得
+//
+// tname(string) : 読み取り対象のテーブル
 func (t *sqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
 	var output string
 	cmd, err := readCreateTableCmd(tname)
@@ -107,7 +118,11 @@ func (t *sqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
 
 }
 
-// DropTable
+// DropTable(tname) = error
+//
+// SQL内のテーブルを削除する
+//
+// tname(string) : 削除対象のテーブル
 func (t *sqliteConfig) DropTable(tname string) error {
 	cmd, err := dropTableCmd(tname)
 	if err != nil {
@@ -118,7 +133,14 @@ func (t *sqliteConfig) DropTable(tname string) error {
 
 }
 
-// createTableCmd
+// createTableCmd(tname, stu, flag) = string, error
+//
+// テーブルを作成するSQLコマンドを作成
+// 構造体データにcreated_atとupdated_atを追加して、作成と更新のタイムスタンプをつける
+//
+// tname(string) : テーブル名
+// stu(interface{}) : テーブル内のデータ精製オプション
+// flag(ifnot) : IF NOT EXISTSをつけるオプション
 func createTableCmd(tname string, stu interface{}, flag ifnot) (string, error) {
 	cmd := "CREATE TABLE" + " "
 	if flag == ifnotOn {
@@ -165,10 +187,13 @@ func createTableCmd(tname string, stu interface{}, flag ifnot) (string, error) {
 
 }
 
-// altertableCmd
-// 追加作成用のテーブルを作るコマンド
+// altertableCmd(tname, cmdA, cmdB) = []string
 //
+// 追加作成用のテーブルを作るコマンド
 // :ToDo
+//
+// cmdA : 登録してあるコマンド
+// cmdB : これから設定するコマンド
 func altertableCmd(tname, cmdA, cmdB string) []string {
 	var output []string
 	//ALTER TABLE tbl_name ADD COLUMN new_col VARCHAR(10) AFTER col1;
@@ -176,21 +201,31 @@ func altertableCmd(tname, cmdA, cmdB string) []string {
 	return output
 }
 
-// dropTableCmd
+// dropTableCmd(tname) = string, error
+//
+// テーブルを削除するSQLコマンドを作る
+//
+// tname(string) : 削除対象のテーブル
 func dropTableCmd(tname string) (string, error) {
 	cmd := "DROP TABLE IF EXISTS" + " '" + tname + "'"
 	return cmd, nil
 
 }
 
-// readTableAllCmd
+// readTableAllCmd() = string, error
+//
+// SQLiteに登録してあるテーブルを取得するコマンドを作る
 func readTableAllCmd() (string, error) {
 	cmd := "SELECT name FROM sqlite_master WHERE type='table'"
 	return cmd, nil
 
 }
 
-// readCreateTableCmd
+// readCreateTableCmd() = string, error
+//
+// SQLiteに登録してあるテーブルを作成したコマンドを読み取るSQLコマンドを作る
+//
+// tname(string) : 読み取り対象となるテーブル
 func readCreateTableCmd(tname string) (string, error) {
 	cmd := "SELECT sql FROM sqlite_master WHERE type='table' AND name='" + tname + "'"
 	return cmd, nil

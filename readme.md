@@ -20,7 +20,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"sqlite"
+	"github.com/karosuwindam/sqlite"
 	"time"
 )
 
@@ -71,7 +71,7 @@ func main() {
 	}
 
 	rdata := []TableTest{}
-	if err := sql.Read(testtablename, TableTest{}, &rdata, map[string]string{"id": strconv.Itoa(deleteid)}, sqlite.AND); err != nil {
+	if err := sql.Read(testtablename, &rdata, map[string]string{"id": strconv.Itoa(deleteid)}, sqlite.AND); err != nil {
 		fmt.Println(err.Error())
 	}
 	if len(rdata) == 0 {
