@@ -32,12 +32,12 @@ const (
 // slice(*[]interface{}):読み取ったデータを格納する変数、ポインタ配列として入力
 // v(map[string]string):検索対象のキーワード、空白は検索しない
 // keytype(KeyWordOption):検索オプション
-func (t *sqliteConfig) Read(tname string, slice interface{}, v map[string]string, keytype KeyWordOption) error {
+func (sql *sqliteConfig) Read(tname string, slice interface{}, v map[string]string, keytype KeyWordOption) error {
 	cmd, err := createReadCmd(tname, slice, v, keytype)
 	if err != nil {
 		return err
 	}
-	rows, err := t.db.Query(cmd)
+	rows, err := sql.db.Query(cmd)
 	if err != nil {
 		return err
 	}
