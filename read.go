@@ -24,9 +24,16 @@ const (
 	ORLike  KeyWordOption = "or_like"
 )
 
-// Read()
-func (t *sqliteConfig) Read(tname string, stu interface{}, slice interface{}, v map[string]string, keytype KeyWordOption) error {
-	cmd, err := createReadCmd(tname, stu, v, keytype)
+// Read(tname, slice, v, keytype) == error
+//
+// SQLiteからデータを読み取る
+//
+// tname(string):読み取り対象をテーブル名
+// slice(*[]interface{}):読み取ったデータを格納する変数、ポインタ配列として入力
+// v(map[string]string):検索対象のキーワード、空白は検索しない
+// keytype(KeyWordOption):検索オプション
+func (t *sqliteConfig) Read(tname string, slice interface{}, v map[string]string, keytype KeyWordOption) error {
+	cmd, err := createReadCmd(tname, slice, v, keytype)
 	if err != nil {
 		return err
 	}
@@ -54,25 +61,34 @@ func (t *sqliteConfig) Read(tname string, stu interface{}, slice interface{}, v 
 	return err
 }
 
-// createReadCmd(tname,stu)
-func createReadCmd(tname string, stu interface{}, keyword map[string]string, keytype KeyWordOption) (string, error) {
-	rt := reflect.TypeOf(stu)
-	if rt.Kind() == reflect.UnsafePointer {
-		return "", errors.New("This input stu data is pointer")
+// createReadCmd(tname,stu) = string,error
+//
+// 読み取り用のコマンドを作るコマンド
+//
+// tname(string) : 読み取り対象のテーブル
+// slice(*[]interface{}) : 検索対象の指定用
+// keyword(map[string]string) : 検索用のキーワードデータ
+func createReadCmd(tname string, slice interface{}, keyword map[string]string, keytype KeyWordOption) (string, error) {
+	rt := reflect.TypeOf(slice)
+	if rt.Kind() != reflect.Ptr {
+		return "", errors.New("This input stu data is not pointer")
 	}
 	cmd := "SELECT * FROM" + " " + tname
 	if len(keyword) == 0 {
 		// return cmd, nil
 	} else {
-		cmd += " " + "WHERE" + " " + convertCmd(stu, keyword, keytype)
+		cmd += " " + "WHERE" + " " + convertSerchCmd(slice, keyword, keytype)
 
 	}
 
 	return cmd, nil
-
 }
 
-// sqlite3RowsReadData
+// sqlite3RowsReadData(slice) = []interface{},error
+//
+// SQLiteから読み取ったデータを格納する変数を作る
+//
+// slice(*[]interface{}) : 変換もとになる構造体配列
 func sqlite3RowsReadData(slice interface{}) ([]interface{}, error) {
 	sv := reflect.ValueOf(slice)
 	if sv.Type().Kind() != reflect.Ptr {
@@ -114,7 +130,12 @@ func sqlite3RowsReadData(slice interface{}) ([]interface{}, error) {
 	return output, nil
 }
 
-// silceToMap
+// silceToMap(silce, stu) = map[string]interface{},error
+//
+// 構造体とSQLから読み取った配列データから、map形式のデータに変換
+//
+// silce(*[]interface{}) : map名のベースとなる構造体
+// stu([]interface{}) : map形式のデータの値
 func silceToMap(silce []interface{}, stu interface{}) (map[string]interface{}, error) {
 	output := map[string]interface{}{}
 	if len(silce) == 0 {
@@ -155,53 +176,68 @@ func silceToMap(silce []interface{}, stu interface{}) (map[string]interface{}, e
 	return output, nil
 }
 
-// convertCmd
-func convertCmd(stu interface{}, keyword map[string]string, keytype KeyWordOption) string {
-	output := ""
-	if stu == nil {
-		return output
+// convertSerchCmd(silce,keyword, keytype) = string
+//
+// silce内の構造体に含まれるdbタグから検索用のコマンド内の値をを作成
+//
+// silce(*[]interface{}) : 検索コマンドベースとなるdbタグが含まれた構造体
+// keyword(map[string]string) : 検索のdbタグのkey名とその値
+// keytype : 検索コマンドを作るためのオプション
+func convertSerchCmd(silce interface{}, keyword map[string]string, keytype KeyWordOption) string {
+	cmd := ""
+	sv := reflect.ValueOf(silce)
+	if sv.Type().Kind() != reflect.Ptr {
+		return ""
+
 	}
-	st := reflect.TypeOf(stu)
+	tStruct := reflect.TypeOf(sv.Elem().Interface()).Elem()
+	vStruct := reflect.New(tStruct)
+	ckStruct := reflect.TypeOf(vStruct.Elem().Interface())
 	count := 0
-	for i := 0; i < st.NumField(); i++ {
-		f := st.Field(i)
+	for i := 0; i < ckStruct.NumField(); i++ {
+		f := ckStruct.Field(i)
 		if keyword[f.Tag.Get("db")] != "" {
 			if count != 0 {
 				switch keytype {
 				case ANDLike:
-					output += " " + string(AND) + " "
+					cmd += " " + string(AND) + " "
 				case ORLike:
-					output += " " + string(OR) + " "
+					cmd += " " + string(OR) + " "
 				default:
-					output += " " + string(keytype) + " "
+					cmd += " " + string(keytype) + " "
 				}
 
 			}
 			if keytype == AND || keytype == OR {
-				output += f.Tag.Get("db") + "="
+				cmd += f.Tag.Get("db") + "="
 				switch f.Type.Kind() {
 				case reflect.Int:
-					output += keyword[f.Tag.Get("db")]
+					cmd += keyword[f.Tag.Get("db")]
 				case reflect.String:
-					output += "'" + keyword[f.Tag.Get("db")] + "'"
+					cmd += "'" + keyword[f.Tag.Get("db")] + "'"
 				}
 			} else {
-				output += f.Tag.Get("db") + " like "
+				cmd += f.Tag.Get("db") + " like "
 				switch f.Type.Kind() {
 				case reflect.Int:
-					output += "'%" + keyword[f.Tag.Get("db")] + "%'"
+					cmd += "'%" + keyword[f.Tag.Get("db")] + "%'"
 				case reflect.String:
-					output += "'%" + keyword[f.Tag.Get("db")] + "%'"
+					cmd += "'%" + keyword[f.Tag.Get("db")] + "%'"
 				}
 			}
 			count++
 		}
 	}
 
-	return output
+	return cmd
 }
 
-// mapToStruct
+// mapToStruct(s,i) = error
+//
+// map形式のデータから構造体のポインタ配列データに追加する
+//
+// s(map[string]interface{}) : 入力用のmap形式データ
+// i(*[]interface{}) : 格納先のポインター配列、構造体
 func mapToStruct(s map[string]interface{}, i interface{}) error {
 
 	sv := reflect.ValueOf(i)
@@ -212,6 +248,9 @@ func mapToStruct(s map[string]interface{}, i interface{}) error {
 		return nil
 	}
 	ii := sv.Elem().Interface()
+	if reflect.TypeOf(ii).Kind() != reflect.Slice {
+		return errors.New("Don't Slice input *i=" + reflect.TypeOf(ii).Kind().String())
+	}
 	tStruct := reflect.TypeOf(ii).Elem()
 	vStruct := reflect.New(tStruct)
 	ckStruct := reflect.TypeOf(vStruct.Elem().Interface())
