@@ -33,7 +33,7 @@ func TestTableRead(t *testing.T) {
 
 	t.Log("-----------Read data ---------------")
 	rdata := []TableTest{}
-	err := sql.Read(testtablename, TableTest{}, &rdata, map[string]string{}, AND)
+	err := sql.Read(testtablename, &rdata, map[string]string{}, AND)
 	if err != nil {
 		t.Errorf("read err :%v", err.Error())
 		t.FailNow()
@@ -55,7 +55,7 @@ func TestTableRead(t *testing.T) {
 	t.Log("read all OK")
 	t.Log("-----------Read data Serch by ID---------------")
 	rdata1 := []TableTest{}
-	err1 := sql.Read(testtablename, TableTest{}, &rdata1, map[string]string{"id": "2"}, AND)
+	err1 := sql.Read(testtablename, &rdata1, map[string]string{"id": "2"}, AND)
 	if err1 != nil {
 		t.Errorf("read err :%v", err1.Error())
 	}
