@@ -3,14 +3,58 @@ package sqlite
 import (
 	"os"
 	"testing"
+	"time"
 )
+
+func TestTableCreateReadCmd(t *testing.T) {
+
+	type TableTest struct {
+		Id   int       `db:"id"`
+		Str  string    `db:"str"`
+		I    int       `db:"i"`
+		time time.Time `db:"time"`
+	}
+
+	testtablename := "test"
+	keyword := map[string]string{"id": "1", "str": "bb"}
+	cmd, err := createReadCmd(testtablename, &[]TableTest{})
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(cmd)
+	cmd, err = createReadCmd(testtablename, &[]TableTest{}, keyword)
+	if err != nil {
+		t.Error(err)
+	}
+	cmd1, err := createReadCmd(testtablename, &[]TableTest{}, keyword, AND)
+	if err != nil {
+		t.Error(err)
+	}
+	cmd2, err := createReadCmd(testtablename, &[]TableTest{}, keyword, AND, AND)
+	if err != nil {
+		t.Error(err)
+	}
+	if cmd != cmd1 && cmd1 != cmd2 {
+		t.Error(cmd1)
+		t.Error(cmd2)
+		t.FailNow()
+	}
+	t.Log(cmd)
+	cmd, err = createReadCmd(testtablename, &[]TableTest{}, OR, keyword)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(cmd)
+
+}
 
 func TestTableRead(t *testing.T) {
 
 	type TableTest struct {
-		Id  int    `db:"id"`
-		Str string `db:"str"`
-		I   int    `db:"i"`
+		Id   int       `db:"id"`
+		Str  string    `db:"str"`
+		I    int       `db:"i"`
+		time time.Time `db:"time"`
 	}
 
 	testtablename := "test"
@@ -27,6 +71,7 @@ func TestTableRead(t *testing.T) {
 	wdata := TableTest{Id: 1, Str: "data", I: 500}
 	for i := 0; i < 20; i++ {
 		wdata.I += i
+		wdata.time = time.Now()
 		sql.Add(testtablename, &wdata)
 		ckdata = append(ckdata, wdata)
 	}
@@ -49,6 +94,9 @@ func TestTableRead(t *testing.T) {
 		}
 		if tmp.Str != tmp2.Str {
 			t.Errorf("read ng for str %v=%v", tmp.Str, tmp2.Str)
+		}
+		if tmp.time.Format(TimeLayout) != tmp2.time.Format(TimeLayout) {
+			t.Errorf("read ng for time %v=%v", tmp.time.Format(TimeLayout), tmp2.time.Format(TimeLayout))
 		}
 	}
 	t.Log(rdata)

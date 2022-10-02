@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+	"unsafe"
 )
 
 //KeyWordOption 検索オプション
@@ -24,20 +25,22 @@ const (
 	ORLike  KeyWordOption = "or_like"
 )
 
-// Read(tname, slice, v, keytype) == error
+// (*cfg)Read(tname, slice, v...) == error
 //
 // SQLiteからデータを読み取る
 //
 // tname(string):読み取り対象をテーブル名
 // slice(*[]interface{}):読み取ったデータを格納する変数、ポインタ配列として入力
+//
+// v : map[string]stringまたは、keytypeの値を設定する
 // v(map[string]string):検索対象のキーワード、空白は検索しない
-// keytype(KeyWordOption):検索オプション
-func (sql *sqliteConfig) Read(tname string, slice interface{}, v map[string]string, keytype KeyWordOption) error {
-	cmd, err := createReadCmd(tname, slice, v, keytype)
+// keytype(KeyWordOption):検索オプション (sqlite.AND or sqlite.OR or sqlite.ANDLike or sqlite.ORLike)
+func (cfg *sqliteConfig) Read(tname string, slice interface{}, v ...interface{}) error {
+	cmd, err := createReadCmd(tname, slice, v...)
 	if err != nil {
 		return err
 	}
-	rows, err := sql.db.Query(cmd)
+	rows, err := cfg.db.Query(cmd)
 	if err != nil {
 		return err
 	}
@@ -61,15 +64,36 @@ func (sql *sqliteConfig) Read(tname string, slice interface{}, v map[string]stri
 	return err
 }
 
-// createReadCmd(tname,stu) = string,error
+// createReadCmd(tname,stu,v...) = string,error
 //
 // 読み取り用のコマンドを作るコマンド
 //
 // tname(string) : 読み取り対象のテーブル
 // slice(*[]interface{}) : 検索対象の指定用
+// v : map[string]stringまたは、keytypeの値を設定する
 // keyword(map[string]string) : 検索用のキーワードデータ
-func createReadCmd(tname string, slice interface{}, keyword map[string]string, keytype KeyWordOption) (string, error) {
+// keytype(KeyWordOption) : 検索オプション
+func createReadCmd(tname string, slice interface{}, v ...interface{}) (string, error) {
 	rt := reflect.TypeOf(slice)
+	keyword := map[string]string{}
+	keytype := AND
+	ck := 0
+	for _, data := range v {
+		switch data.(type) {
+		case map[string]string:
+			if (ck & 0x1) > 0 {
+				continue
+			}
+			keyword = data.(map[string]string)
+			ck |= 0x1
+		case KeyWordOption:
+			if (ck & 0x2) > 0 {
+				continue
+			}
+			keytype = data.(KeyWordOption)
+			ck |= 0x2
+		}
+	}
 	if rt.Kind() != reflect.Ptr {
 		return "", errors.New("This input stu data is not pointer")
 	}
@@ -151,7 +175,16 @@ func silceToMap(silce []interface{}, stu interface{}) (map[string]interface{}, e
 	vStruct := reflect.New(tStruct)
 	ckStruct := reflect.TypeOf(vStruct.Elem().Interface())
 	for i, data := range silce {
-		tmp := reflect.ValueOf(data).Elem().Interface()
+		dataf := reflect.ValueOf(data).Elem()
+		var tmp interface{}
+		if dataf.Kind() == timeKind {
+
+			dataf = reflect.NewAt(dataf.Type(), unsafe.Pointer(dataf.UnsafeAddr())).Elem()
+			tmp = dataf.Interface()
+		} else {
+			tmp = dataf.Interface()
+
+		}
 		if i < ckStruct.NumField() {
 			f := ckStruct.Field(i)
 			switch tmp.(type) {
@@ -230,43 +263,4 @@ func convertSerchCmd(silce interface{}, keyword map[string]string, keytype KeyWo
 	}
 
 	return cmd
-}
-
-// mapToStruct(s,i) = error
-//
-// map形式のデータから構造体のポインタ配列データに追加する
-//
-// s(map[string]interface{}) : 入力用のmap形式データ
-// i(*[]interface{}) : 格納先のポインター配列、構造体
-func mapToStruct(s map[string]interface{}, i interface{}) error {
-
-	sv := reflect.ValueOf(i)
-	if sv.Type().Kind() != reflect.Ptr {
-		return errors.New("Don't struct pointer input i=" + sv.Type().Kind().String())
-	}
-	if len(s) == 0 {
-		return nil
-	}
-	ii := sv.Elem().Interface()
-	if reflect.TypeOf(ii).Kind() != reflect.Slice {
-		return errors.New("Don't Slice input *i=" + reflect.TypeOf(ii).Kind().String())
-	}
-	tStruct := reflect.TypeOf(ii).Elem()
-	vStruct := reflect.New(tStruct)
-	ckStruct := reflect.TypeOf(vStruct.Elem().Interface())
-	for i := 0; i < ckStruct.NumField(); i++ {
-		f := ckStruct.Field(i)
-		v := vStruct.Elem().FieldByName(f.Name)
-		ss := s[f.Name]
-		switch f.Type.Kind() {
-		case reflect.Int & reflect.TypeOf(ss).Kind():
-			v.SetInt(int64(ss.(int)))
-		case reflect.String & reflect.TypeOf(ss).Kind():
-			v.SetString(ss.(string))
-		}
-	}
-	out := vStruct.Elem()
-	v := sv.Elem()
-	v.Set(reflect.Append(v, out))
-	return nil
 }

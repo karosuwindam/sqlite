@@ -21,22 +21,24 @@ func Setup(filepath string) sqliteConfig {
 	return sqliteConfig{filepass: filepath}
 }
 
-// Open()
+// (*cfg)Open()
 //
 // SQLiteのファイルを開く
-func (t *sqliteConfig) Open() error {
+func (cfg *sqliteConfig) Open() error {
 	var err error
-	t.db, err = sql.Open("sqlite3", t.filepass)
+	cfg.db, err = sql.Open("sqlite3", cfg.filepass)
 	return err
 }
 
-// Close()
+// (*cfg)Close()
 //
 // SQLiteのファイルを閉じる
-func (t *sqliteConfig) Close() error {
-	return t.db.Close()
+func (cfg *sqliteConfig) Close() error {
+	return cfg.db.Close()
 
 }
 
-//ファイルパスの読み取り
-func (t *sqliteConfig) ReturnFilePass() string { return t.filepass }
+// (*cfg)ReturnFilePass()
+//
+// ファイルパスの読み取り
+func (cfg *sqliteConfig) ReturnFilePass() string { return cfg.filepass }

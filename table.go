@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -16,22 +17,15 @@ const (
 	ifnotOn  ifnot = true
 )
 
-const (
-	// TimeLayout String変換用テンプレート
-	TimeLayout = "2006-01-02 15:04:05.999999999"
-	// TimeLayout2 String変換用テンプレート
-	TimeLayout2 = "2006-01-02 15:04:05.999999 +0000 UTC"
-)
-
-// CreateTable(tname, stu) = error
+// (*cfg)CreateTable(tname, stu) = error
 //
 // SQL内にテーブルを作成する
 //
 // tname(string) : 作成するテーブル名
 // stu(interface{}) : 作成するテーブル内の構造体
-func (t *sqliteConfig) CreateTable(tname string, stu interface{}) error {
+func (cfg *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 	var cmd string
-	backcmd, err := t.ReadCreateTableCmd(tname)
+	backcmd, err := cfg.ReadCreateTableCmd(tname)
 	if err != nil {
 		return err
 	}
@@ -40,16 +34,32 @@ func (t *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 		if err != nil {
 			return err
 		}
-		if cmd == backcmd { //登録コマンドと実行コマンドが同じ
+
+		tNameA, dataA := createSqlTableAna(backcmd)
+		tNameB, dataB := createSqlTableAna(cmd)
+		if tNameA == tNameB && len(dataA) == len(dataB) { //登録コマンドと実行コマンドが同じ
+			return nil
 
 		} else { //登録コマンドと実行コマンドが異なる
-			a := strings.Split(cmd, ",")
-			b := strings.Split(backcmd, ",")
-			if len(a) > len(b) { //カラム増やす変更を増やす
+			return nil
+			// To Do
+			// if !updateTableAnabledCk(dataA, dataB) { //変更可能チェック
+			// 	return nil
+			// }
+			// rdata := structToSlice(stu)
+			// t.Read(tname, &rdata, make(map[string]string), AND)
+			// _, err = t.db.Exec(cmd)
 
-			} else {
-				return errors.New("Don't change table for delete column")
-			}
+			// AlterはSqlite3では使用できないので別の方法を考える
+			// altcmd := altertableCmd(backcmd, cmd)
+			// if len(altcmd) != 0 {
+			// 	for _, altcmdTmp := range altcmd {
+			// 		_, err = t.db.Exec(altcmdTmp)
+			// 		if err != nil {
+			// 			return err
+			// 		}
+			// 	}
+			// }
 
 		}
 
@@ -58,23 +68,83 @@ func (t *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 		if err != nil {
 			return err
 		}
-		_, err = t.db.Exec(cmd)
+		_, err = cfg.db.Exec(cmd)
 
 	}
 
 	return err
 }
 
-// ReadTableList() = []string, error
+// (*cfg)CreateTable(tname, stu) = error
+//
+// SQL内にテーブルを更新する処理
+//
+// ToDo
+// tname(string) : 作成するテーブル名
+// stu(interface{}) : 作成するテーブル内の構造体
+func (cfg *sqliteConfig) UpdateTable(tname string, stu interface{}, slice interface{}) error {
+	return nil
+	var cmd string
+	backcmd, err := cfg.ReadCreateTableCmd(tname)
+	if err != nil {
+		return err
+	}
+	if backcmd != "" { //tableが作成済み
+		cmd, err = createTableCmd(tname, stu, ifnotOff)
+		if err != nil {
+			return err
+		}
+
+		tNameA, dataA := createSqlTableAna(backcmd)
+		tNameB, dataB := createSqlTableAna(cmd)
+		if tNameA == tNameB && len(dataA) == len(dataB) { //登録コマンドと実行コマンドが同じ
+			return nil
+
+		} else { //登録コマンドと実行コマンドが異なる
+			return nil
+			// To Do
+			// if !updateTableAnabledCk(dataA, dataB) { //変更可能チェック
+			// 	return nil
+			// }
+			// rdata := structToSlice(stu)
+			// t.Read(tname, &rdata, make(map[string]string), AND)
+			// _, err = t.db.Exec(cmd)
+
+			// AlterはSqlite3では使用できないので別の方法を考える
+			// altcmd := altertableCmd(backcmd, cmd)
+			// if len(altcmd) != 0 {
+			// 	for _, altcmdTmp := range altcmd {
+			// 		_, err = t.db.Exec(altcmdTmp)
+			// 		if err != nil {
+			// 			return err
+			// 		}
+			// 	}
+			// }
+
+		}
+
+	} else { //tableが作成していない
+		cmd, err = createTableCmd(tname, stu, ifnotOn)
+		if err != nil {
+			return err
+		}
+		_, err = cfg.db.Exec(cmd)
+
+	}
+
+	return err
+}
+
+// (*cfg)ReadTableList() = []string, error
 //
 // SQL内のテーブル名を取得
-func (t *sqliteConfig) ReadTableList() ([]string, error) {
+func (cfg *sqliteConfig) ReadTableList() ([]string, error) {
 	var output []string
 	cmd, err := readTableAllCmd()
 	if err != nil {
 		return output, err
 	}
-	rows, err := t.db.Query(cmd)
+	rows, err := cfg.db.Query(cmd)
 	if err != nil {
 		return output, err
 	}
@@ -91,18 +161,18 @@ func (t *sqliteConfig) ReadTableList() ([]string, error) {
 	return output, err
 }
 
-// ReadCreateTableCmd(tname) = string, error
+// (*cfg)ReadCreateTableCmd(tname) = string, error
 //
 // SQL内の作成したテーブルのコマンド情報を取得
 //
 // tname(string) : 読み取り対象のテーブル
-func (t *sqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
+func (cfg *sqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
 	var output string
 	cmd, err := readCreateTableCmd(tname)
 	if err != nil {
 		return output, err
 	}
-	rows, err := t.db.Query(cmd)
+	rows, err := cfg.db.Query(cmd)
 	if err != nil {
 		return output, err
 	}
@@ -118,17 +188,17 @@ func (t *sqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
 
 }
 
-// DropTable(tname) = error
+// (*cfg)DropTable(tname) = error
 //
 // SQL内のテーブルを削除する
 //
 // tname(string) : 削除対象のテーブル
-func (t *sqliteConfig) DropTable(tname string) error {
+func (cfg *sqliteConfig) DropTable(tname string) error {
 	cmd, err := dropTableCmd(tname)
 	if err != nil {
 		return err
 	}
-	_, err = t.db.Exec(cmd)
+	_, err = cfg.db.Exec(cmd)
 	return err
 
 }
@@ -169,6 +239,9 @@ func createTableCmd(tname string, stu interface{}, flag ifnot) (string, error) {
 		case reflect.String:
 			tmp = f.Tag.Get("db")
 			cmd += "\"" + tmp + "\" varchar"
+		case timeKind:
+			tmp = f.Tag.Get("db")
+			cmd += "\"" + tmp + "\" datetime"
 		}
 		if tmp == "id" {
 			cmd += " PRIMARY KEY AUTOINCREMENT NOT NULL"
@@ -187,18 +260,107 @@ func createTableCmd(tname string, stu interface{}, flag ifnot) (string, error) {
 
 }
 
-// altertableCmd(tname, cmdA, cmdB) = []string
+// altertableCmd(cmdA, cmdB) = []string
 //
-// 追加作成用のテーブルを作るコマンド
-// :ToDo
+// 作成コマンドを比較して追加作成用のテーブルを作るコマンド
+// SQLiteではAlterコマンドは非対応のため未使用
 //
 // cmdA : 登録してあるコマンド
 // cmdB : これから設定するコマンド
-func altertableCmd(tname, cmdA, cmdB string) []string {
+func altertableCmd(cmdA, cmdB string) []string {
 	var output []string
-	//ALTER TABLE tbl_name ADD COLUMN new_col VARCHAR(10) AFTER col1;
+	tnameA, dataA := createSqlTableAna(cmdA)
+	tnameB, dataB := createSqlTableAna(cmdB)
+	if tnameA != tnameB {
+		return output
+	}
+	if len(dataA) < len(dataB) {
+		bKey := ""
+		for aKey, tdata := range dataB {
+			if dataA[aKey] != tdata && bKey != "" {
+				cmd := createAlterTableCmd(tnameB, bKey, aKey, tdata)
+				output = append(output, cmd)
+			}
+			bKey = aKey
+
+		}
+	}
 
 	return output
+}
+
+//updateTableAnabledCk(dataA,dataB) = bool
+//
+// mapデータを比較して、dataAの情報がdataBにすべて含まれていることを確認
+// dataA(map[string]string) : 元のデータ
+// dataB(map[string]string) : 切り替え先データ
+func updateTableAnabledCk(dataA, dataB map[string]string) bool {
+	if len(dataA) > len(dataB) {
+		return false
+	}
+	for key, tData := range dataA {
+		if dataB[key] != tData {
+			return false
+		}
+	}
+	return true
+}
+
+// createSqlTableAna(cmd) = string, map[string]string
+//
+// Table作成のSQLコマンドを解析して、テーブルとkey名と型のMapデータを作る
+//
+// cmd(string) : 解析用のコマンド
+func createSqlTableAna(cmd string) (string, map[string]string) {
+	tmp := strings.Split(cmd, "(")
+	tmp1 := strings.Split(tmp[0], " ")
+	if strings.ToLower(tmp1[1]) != "table" {
+		return "", nil
+	}
+	tmp2 := strings.Split(tmp[1], ")")[0]
+	tname := tmp1[len(tmp1)-1]
+	if tmp1[len(tmp1)-1] == "" {
+		tname = tmp1[len(tmp1)-2]
+	}
+	if tname[0] == "\""[0] {
+		if tname[0] == tname[len(tname)-1] {
+			tname = tname[1 : len(tname)-1]
+		}
+	}
+	mdata := map[string]string{}
+	for _, key := range strings.Split(tmp2, ",") {
+		tmKey := strings.Split(key, " ")
+		count := 0
+		for ; count < len(tmKey)-1; count++ {
+			if tmKey[count] != "" {
+				break
+			}
+		}
+		nKey := tmKey[count]
+		if nKey[0] == "\""[0] {
+			if nKey[0] == nKey[len(nKey)-1] {
+				nKey = nKey[1 : len(nKey)-1]
+			}
+		}
+		tKey := tmKey[count+1]
+		mdata[nKey] = tKey
+	}
+
+	return tname, mdata
+
+}
+
+// createAlterTableCmd(tname,bKey,aKey,tdata) = string
+//
+// SQLite用のテーブルのカラム追加コマンドを作成
+//
+// tname(string) : 対象のテーブル
+// bKey(string) : 挿入対象の前Key名
+// aKey(string) : 挿入Key名
+// tdata(string) : 挿入Keyに対応したKeyの型
+func createAlterTableCmd(tname, bKey, aKey, tdata string) string {
+	cmd := fmt.Sprintf("ALTER TABLE %v ADD COLUMN %v %v AFTER %v", tname, aKey, tdata, bKey)
+	return cmd
 }
 
 // dropTableCmd(tname) = string, error

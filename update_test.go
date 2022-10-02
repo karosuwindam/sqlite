@@ -43,9 +43,9 @@ func TestUpdate(t *testing.T) {
 		updateid = rand.Intn(20)
 	}
 	udata := TableTest{Id: updateid, Str: "databadse", I: dataInt}
-	if err := sql.Update(testtablename, udata); err != nil {
+	if err := sql.Update(testtablename, &udata); err != nil {
 		t.Errorf("data update err")
-		t.Fail()
+		t.FailNow()
 	}
 	t.Log("----------- Update data OK---------------")
 	t.Log("----------- Update data Read---------------")
@@ -53,7 +53,7 @@ func TestUpdate(t *testing.T) {
 	sql.Read(testtablename, &rdata, map[string]string{}, AND)
 	if len(rdata) == 0 {
 		t.Errorf("read data not id=%v", updateid)
-		t.Fail()
+		t.FailNow()
 	}
 	for i := 0; i < len(rdata); i++ {
 		ck := ckdata[i]
@@ -65,15 +65,15 @@ func TestUpdate(t *testing.T) {
 		}
 		if rdata[i].Id != ck.Id {
 			t.Errorf("read data not id %v,%v", rdata[i].Id, ck.Id)
-			t.Fail()
+			t.FailNow()
 		}
 		if rdata[i].Str != ck.Str {
 			t.Errorf("read data not str %v,%v", rdata[i].Str, ck.Str)
-			t.Fail()
+			t.FailNow()
 		}
 		if rdata[i].I != ck.I {
 			t.Errorf("read data not i %v,%v", rdata[i].I, ck.I)
-			t.Fail()
+			t.FailNow()
 		}
 	}
 	t.Log("----------- Update data Read OK ---------------")
