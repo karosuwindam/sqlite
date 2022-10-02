@@ -22,13 +22,16 @@ func (cfg *sqliteConfig) Add(tname string, tabledatap interface{}) error {
 	ppv := reflect.ValueOf(pv.Elem().Interface())
 	switch ppv.Kind() {
 	case reflect.Slice: //配列構造体の入力
-		return nil
+		// return nil
 		pv := reflect.ValueOf(reflect.ValueOf(tabledatap).Elem().Interface())
 		for i := 0; i < pv.Len(); i++ {
-			f := pv.Index(i).Interface()
-			//以下の分で、構造体のポインタ渡しで失敗しているので
-			//ポインタの同じ構造体を作ってそっちに渡して動作するかテストを実施する。
-			cfg.addOne(tname, &f)
+			fi := pv.Index(i)
+			fi = reflect.NewAt(fi.Type(), unsafe.Pointer(fi.UnsafeAddr()))
+			f := fi.Interface()
+			if err := cfg.addOne(tname, f); err != nil {
+				return err
+			}
+
 		}
 		return nil
 	case reflect.Struct: //構造体の入力
