@@ -43,7 +43,7 @@ func TestUpdate(t *testing.T) {
 		updateid = rand.Intn(20)
 	}
 	udata := TableTest{Id: updateid, Str: "databadse", I: dataInt}
-	if err := sql.Update(testtablename, udata); err != nil {
+	if err := sql.Update(testtablename, &udata); err != nil {
 		t.Errorf("data update err")
 		t.FailNow()
 	}

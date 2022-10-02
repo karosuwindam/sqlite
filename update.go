@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+	"unsafe"
 )
 
 // (*cfg)Update(tname str) = error
@@ -12,13 +13,13 @@ import (
 // SQLiteのデータベースから登録してあるデータを書き換える
 //
 // tname(string) : 対象のテーブル名
-// str(interface{}) : データを書き換えるための構造体
+// str(interface{}) : データを書き換えるための構造体のポインタ
 func (cfg *sqliteConfig) Update(tname string, str interface{}) error {
-	cmd := createUpdateCmd(tname, str)
-	if cmd == "" {
-		return errors.New("Don't create updata cmd")
+	cmd, err := createUpdateCmd(tname, str)
+	if err != nil {
+		return err
 	}
-	_, err := cfg.db.Exec(cmd)
+	_, err = cfg.db.Exec(cmd)
 	return err
 }
 
@@ -28,15 +29,29 @@ func (cfg *sqliteConfig) Update(tname string, str interface{}) error {
 //
 // tname(string) : 対象のテーブル名
 // str(interface{}) : データを書き換えるための構造体
-func createUpdateCmd(tname string, str interface{}) string {
+func createUpdateCmd(tname string, ptabledata interface{}) (string, error) {
+	if reflect.TypeOf(ptabledata).Kind() != reflect.Ptr {
+		return "", errors.New("input data not Pointer")
+	}
+
 	cmd := "UPDATE " + tname + " SET"
+	str := reflect.ValueOf(ptabledata).Elem().Interface()
 	rv := reflect.ValueOf(str)
 	rt := reflect.TypeOf(str)
 	id := 0
 	flag := false
 	for i := 0; i < rt.NumField(); i++ {
 		f := rt.Field(i)
-		v := rv.FieldByName(f.Name).Interface()
+		var v interface{}
+		if rv.FieldByName(f.Name).Kind() == reflect.Struct {
+			if rv.FieldByName(f.Name).Kind() == timeKind {
+				fv := reflect.ValueOf(ptabledata).Elem().FieldByName(f.Name)
+				fv = reflect.NewAt(fv.Type(), unsafe.Pointer(fv.UnsafeAddr())).Elem()
+				v = fv.Interface()
+			}
+		} else {
+			v = rv.FieldByName(f.Name).Interface()
+		}
 		if f.Tag.Get("db") == "" {
 			continue
 		} else if f.Tag.Get("db") == "id" {
@@ -59,11 +74,11 @@ func createUpdateCmd(tname string, str interface{}) string {
 		}
 	}
 	if !flag {
-		return ""
+		return "", errors.New("Don't create updata cmd")
 	}
 	now := time.Now()
 	cmd += " ," + "updated_at" + "=" + "'" + "" + now.Format(TimeLayout) + "'"
 	cmd += " " + "WHERE" + " " + "id=" + strconv.Itoa(id)
 
-	return cmd
+	return cmd, nil
 }

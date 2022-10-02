@@ -3,7 +3,18 @@ package sqlite
 import (
 	"errors"
 	"reflect"
+	"time"
+	"unsafe"
 )
+
+const (
+	// TimeLayout1 String変換用テンプレート
+	TimeLayout = "2006-01-02 15:04:05.999999999"
+	// TimeLayout2 String変換用テンプレート
+	TimeLayout2 = "2006-01-02 15:04:05.99999999 +0000 UTC"
+)
+
+var timeKind = reflect.TypeOf(time.Time{}).Kind()
 
 // structToSlice(str) = interface{}
 //
@@ -45,10 +56,22 @@ func mapToStruct(s map[string]interface{}, i interface{}) error {
 		v := vStruct.Elem().FieldByName(f.Name)
 		ss := s[f.Name]
 		switch f.Type.Kind() {
-		case reflect.Int & reflect.TypeOf(ss).Kind():
-			v.SetInt(int64(ss.(int)))
-		case reflect.String & reflect.TypeOf(ss).Kind():
-			v.SetString(ss.(string))
+		case reflect.Int:
+			if reflect.Int == reflect.TypeOf(ss).Kind() {
+				v.SetInt(int64(ss.(int)))
+			}
+		case reflect.String:
+			if reflect.String == reflect.TypeOf(ss).Kind() {
+				v.SetString(ss.(string))
+			}
+		case reflect.Struct:
+			//時刻処理
+			if ss != nil && timeKind == f.Type.Kind() {
+				v = reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem()
+				dDate := ss.(time.Time)
+				fv := reflect.ValueOf(&dDate).Elem()
+				v.Set(fv)
+			}
 		}
 	}
 	out := vStruct.Elem()
@@ -79,33 +102,4 @@ func cangeDbID(id int, tabledatap interface{}) {
 			}
 		}
 	}
-}
-
-// tmpSliceInputToStruct(pStruct) = inteface{}
-//
-// 構造体をポインタ構造体に変換
-// 失敗するとnil出力される
-//
-// Struct(inteface{}) : 変換元の構造体
-func structTopStruct(Struct interface{}) interface{} {
-	pv := reflect.ValueOf(Struct)
-	if pv.Kind() != reflect.Struct {
-		return nil
-	}
-	tStruct := reflect.TypeOf(Struct)
-	vStruct := reflect.New(tStruct)
-	ckStruct := reflect.TypeOf(vStruct.Elem().Interface())
-	for j := 0; j < ckStruct.NumField(); j++ {
-		f := ckStruct.Field(j)
-		v := vStruct.Elem().FieldByName(f.Name)
-		ss := pv.FieldByName(f.Name).Interface()
-		switch f.Type.Kind() {
-		case reflect.Int & reflect.TypeOf(ss).Kind():
-			v.SetInt(int64(ss.(int)))
-		case reflect.String & reflect.TypeOf(ss).Kind():
-			v.SetString(ss.(string))
-		}
-
-	}
-	return vStruct.Interface()
 }

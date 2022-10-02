@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+	"unsafe"
 )
 
 // (*cfg)AddOne(tname tabledatap) = error
@@ -36,7 +37,7 @@ func (cfg *sqliteConfig) Add(tname string, tabledatap interface{}) error {
 	return nil
 }
 
-// (*cfg)addOne(tname tabledatap) = error
+// (*cfg)add(tname tabledatap) = error
 //
 // SQLのテーブルにレコードを一つ追加する。
 //
@@ -44,9 +45,9 @@ func (cfg *sqliteConfig) Add(tname string, tabledatap interface{}) error {
 // tabledatap(interface{}) :テーブルに追加する構造体データのポインタ
 func (cfg *sqliteConfig) addOne(tname string, tabledatap interface{}) error {
 	cangeDbID(cfg.sqlite3IdMax(tname), tabledatap)
-	tabledata := reflect.ValueOf(tabledatap).Elem().Interface()
+	// tabledata := reflect.ValueOf(tabledatap).Elem().Interface()
 
-	cmd, err := createaddCmdByID(tname, tabledata)
+	cmd, err := createaddCmdByID(tname, tabledatap)
 	if err != nil {
 		return err
 	}
@@ -60,22 +61,35 @@ func (cfg *sqliteConfig) addOne(tname string, tabledatap interface{}) error {
 //
 // tname(string) : テーブル名
 // tabledata(interface{}) : データを作成する構造体
-func createaddCmdByID(tname string, tabledata interface{}) (string, error) {
+func createaddCmdByID(tname string, ptabledata interface{}) (string, error) {
+	if reflect.TypeOf(ptabledata).Kind() != reflect.Ptr {
+		return "", errors.New("input data not Pointer")
+	}
 	cmd := "INSERT INTO " + tname + " "
 	cmdColume := ""
 	cmdVaule := ""
 	now := time.Now()
-	st := reflect.TypeOf(tabledata)
-	sv := reflect.ValueOf(tabledata)
+	tabledata := reflect.ValueOf(ptabledata).Elem()
+
+	st := reflect.TypeOf(tabledata.Interface())
+	sv := reflect.ValueOf(tabledata.Interface())
 	for i := 0; i < st.NumField(); i++ {
 		ft := st.Field(i)
 		fv := sv.Field(i)
 		if key := ft.Tag.Get("db"); key != "" {
-			fvi := fv.Interface()
 			if i != 0 {
 				cmdColume += ","
 				cmdVaule += ","
 			}
+			if fv.Kind() == timeKind { //時刻処理
+				fv = tabledata.FieldByName(ft.Name)
+				fv = reflect.NewAt(fv.Type(), unsafe.Pointer(fv.UnsafeAddr())).Elem()
+				fvt := fv.Interface()
+				cmdColume += key
+				cmdVaule += "'" + fvt.(time.Time).Format(TimeLayout) + "'"
+				continue
+			}
+			fvi := fv.Interface()
 			cmdColume += key
 			switch fvi.(type) {
 			case int:
