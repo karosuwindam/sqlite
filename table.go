@@ -17,13 +17,6 @@ const (
 	ifnotOn  ifnot = true
 )
 
-const (
-	// TimeLayout String変換用テンプレート
-	TimeLayout = "2006-01-02 15:04:05.999999999"
-	// TimeLayout2 String変換用テンプレート
-	TimeLayout2 = "2006-01-02 15:04:05.999999 +0000 UTC"
-)
-
 // (*cfg)CreateTable(tname, stu) = error
 //
 // SQL内にテーブルを作成する
@@ -246,6 +239,9 @@ func createTableCmd(tname string, stu interface{}, flag ifnot) (string, error) {
 		case reflect.String:
 			tmp = f.Tag.Get("db")
 			cmd += "\"" + tmp + "\" varchar"
+		case timeKind:
+			tmp = f.Tag.Get("db")
+			cmd += "\"" + tmp + "\" datetime"
 		}
 		if tmp == "id" {
 			cmd += " PRIMARY KEY AUTOINCREMENT NOT NULL"
