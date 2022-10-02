@@ -5,41 +5,40 @@ import (
 	"time"
 )
 
-//未使用
-// func TestCommonStructToSlice(t *testing.T) {
-// 	type TableTest struct {
-// 		Id   int       `db:"id"`
-// 		Str  string    `db:"str"`
-// 		I    int       `db:"i"`
-// 		Time time.Time `db:"time"`
-// 	}
-// 	data := structToSlice(TableTest{}).([]TableTest)
+func TestCommonStructToSlice(t *testing.T) {
+	type TableTest struct {
+		Id   int       `db:"id"`
+		Str  string    `db:"str"`
+		I    int       `db:"i"`
+		Time time.Time `db:"time"`
+	}
+	data := structToSlice(TableTest{}).([]TableTest)
 
-// 	if len(data) != 0 {
-// 		t.Errorf("data len = %v", len(data))
-// 		t.FailNow()
-// 	}
-// 	aData := TableTest{Id: 1, Str: "data", I: 10}
-// 	data = append(data, aData)
-// 	if len(data) != 1 {
-// 		t.Errorf("data len =%v", len(data))
-// 		t.FailNow()
-// 	}
+	if len(data) != 0 {
+		t.Errorf("data len = %v", len(data))
+		t.FailNow()
+	}
+	aData := TableTest{Id: 1, Str: "data", I: 10}
+	data = append(data, aData)
+	if len(data) != 1 {
+		t.Errorf("data len =%v", len(data))
+		t.FailNow()
+	}
 
-// 	if data[0].Id != aData.Id {
-// 		t.Errorf("data NG %v=%v", data[0].Id, aData.Id)
-// 		t.FailNow()
-// 	}
-// 	if data[0].Str != aData.Str {
-// 		t.Errorf("data NG %v=%v", data[0].Str, aData.Str)
-// 		t.FailNow()
-// 	}
-// 	if data[0].I != aData.I {
-// 		t.Errorf("data NG %v=%v", data[0].I, aData.I)
-// 		t.FailNow()
-// 	}
-// 	t.Log("------------------ Struct To Slice OK -----------------")
-// }
+	if data[0].Id != aData.Id {
+		t.Errorf("data NG %v=%v", data[0].Id, aData.Id)
+		t.FailNow()
+	}
+	if data[0].Str != aData.Str {
+		t.Errorf("data NG %v=%v", data[0].Str, aData.Str)
+		t.FailNow()
+	}
+	if data[0].I != aData.I {
+		t.Errorf("data NG %v=%v", data[0].I, aData.I)
+		t.FailNow()
+	}
+	t.Log("------------------ Struct To Slice OK -----------------")
+}
 
 func TestCommonMapToStruct(t *testing.T) {
 	type TableTest struct {
