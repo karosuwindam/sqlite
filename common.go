@@ -76,7 +76,8 @@ func mapToStruct(s map[string]interface{}, i interface{}) error {
 	}
 	out := vStruct.Elem()
 	v := sv.Elem()
-	v.Set(reflect.Append(v, out))
+	b := reflect.Append(v, out)
+	v.Set(b)
 	return nil
 }
 

@@ -41,25 +41,7 @@ func (cfg *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 			return nil
 
 		} else { //登録コマンドと実行コマンドが異なる
-			return nil
-			// To Do
-			// if !updateTableAnabledCk(dataA, dataB) { //変更可能チェック
-			// 	return nil
-			// }
-			// rdata := structToSlice(stu)
-			// t.Read(tname, &rdata, make(map[string]string), AND)
-			// _, err = t.db.Exec(cmd)
-
-			// AlterはSqlite3では使用できないので別の方法を考える
-			// altcmd := altertableCmd(backcmd, cmd)
-			// if len(altcmd) != 0 {
-			// 	for _, altcmdTmp := range altcmd {
-			// 		_, err = t.db.Exec(altcmdTmp)
-			// 		if err != nil {
-			// 			return err
-			// 		}
-			// 	}
-			// }
+			return errors.New("Inputed data table struct different")
 
 		}
 
@@ -82,8 +64,8 @@ func (cfg *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 // ToDo
 // tname(string) : 作成するテーブル名
 // stu(interface{}) : 作成するテーブル内の構造体
-func (cfg *sqliteConfig) UpdateTable(tname string, stu interface{}, slice interface{}) error {
-	return nil
+func (cfg *sqliteConfig) UpdateTable(tname string, stu interface{}) error {
+	// return nil
 	var cmd string
 	backcmd, err := cfg.ReadCreateTableCmd(tname)
 	if err != nil {
@@ -103,11 +85,12 @@ func (cfg *sqliteConfig) UpdateTable(tname string, stu interface{}, slice interf
 		} else { //登録コマンドと実行コマンドが異なる
 			return nil
 			// To Do
-			// if !updateTableAnabledCk(dataA, dataB) { //変更可能チェック
-			// 	return nil
-			// }
-			// rdata := structToSlice(stu)
-			// t.Read(tname, &rdata, make(map[string]string), AND)
+			if !updateTableAnabledCk(dataA, dataB) { //変更可能チェック
+				return nil
+			}
+			rdata := structToSlice(stu)
+			err := cfg.Read(tNameA, &rdata)
+			fmt.Println(rdata, err)
 			// _, err = t.db.Exec(cmd)
 
 			// AlterはSqlite3では使用できないので別の方法を考える
@@ -120,6 +103,7 @@ func (cfg *sqliteConfig) UpdateTable(tname string, stu interface{}, slice interf
 			// 		}
 			// 	}
 			// }
+			return nil
 
 		}
 
@@ -133,6 +117,16 @@ func (cfg *sqliteConfig) UpdateTable(tname string, stu interface{}, slice interf
 	}
 
 	return err
+}
+
+// (*cfg) TableChangeName(bName, aName) = error
+//
+// テーブル名を変更するコマンド
+//
+// bName(string) : 前のテーブル名
+// aName(string) : あとのテーブル名
+func (cfg *sqliteConfig) TableChangeName(bName, aName string) error {
+	return nil
 }
 
 // (*cfg)ReadTableList() = []string, error
