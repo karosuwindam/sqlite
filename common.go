@@ -80,3 +80,32 @@ func cangeDbID(id int, tabledatap interface{}) {
 		}
 	}
 }
+
+// tmpSliceInputToStruct(pStruct) = inteface{}
+//
+// 構造体をポインタ構造体に変換
+// 失敗するとnil出力される
+//
+// Struct(inteface{}) : 変換元の構造体
+func structTopStruct(Struct interface{}) interface{} {
+	pv := reflect.ValueOf(Struct)
+	if pv.Kind() != reflect.Struct {
+		return nil
+	}
+	tStruct := reflect.TypeOf(Struct)
+	vStruct := reflect.New(tStruct)
+	ckStruct := reflect.TypeOf(vStruct.Elem().Interface())
+	for j := 0; j < ckStruct.NumField(); j++ {
+		f := ckStruct.Field(j)
+		v := vStruct.Elem().FieldByName(f.Name)
+		ss := pv.FieldByName(f.Name).Interface()
+		switch f.Type.Kind() {
+		case reflect.Int & reflect.TypeOf(ss).Kind():
+			v.SetInt(int64(ss.(int)))
+		case reflect.String & reflect.TypeOf(ss).Kind():
+			v.SetString(ss.(string))
+		}
+
+	}
+	return vStruct.Interface()
+}

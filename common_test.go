@@ -1,6 +1,9 @@
 package sqlite
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestCommonStructToSlice(t *testing.T) {
 	type TableTest struct {
@@ -90,4 +93,44 @@ func TestCommonCangeDbID(t *testing.T) {
 	}
 
 	t.Log("------------------ Cange Db for ID OK -----------------")
+}
+
+func TestCommonStructTopStruct(t *testing.T) {
+	type TableTest struct {
+		Id   int       `db:"id"`
+		Str  string    `db:"str"`
+		I    int       `db:"i"`
+		time time.Time `db:"time"`
+	}
+	if structTopStruct(int(1)) != nil {
+		t.Errorf("err data input not err")
+		t.FailNow()
+	}
+	data := TableTest{Id: 30, Str: "data", I: 455}
+	pdata := structTopStruct(data)
+	if pdata == nil {
+		t.Errorf("input data not pointer")
+		t.FailNow()
+	}
+	switch pdata.(type) {
+	case *TableTest:
+		ppdata := pdata.(*TableTest)
+		if ppdata.Id != data.Id {
+			t.Errorf("pointer data not basedata,Id %v = %v", ppdata.Id, data.Id)
+			t.FailNow()
+		}
+		if ppdata.Str != data.Str {
+			t.Errorf("pointer data not basedata,Str %v = %v", ppdata.I, data.I)
+			t.FailNow()
+		}
+		if ppdata.I != data.I {
+			t.FailNow()
+			t.Errorf("pointer data not basedata,I %v = %v", ppdata.I, data.I)
+		}
+	default:
+		t.Errorf("not pointer")
+		t.FailNow()
+	}
+	t.Log("------------------ Cange Struct to Point Struct OK -----------------")
+
 }
