@@ -23,7 +23,7 @@ const (
 //
 // tname(string) : 作成するテーブル名
 // stu(interface{}) : 作成するテーブル内の構造体
-func (cfg *sqliteConfig) CreateTable(tname string, stu interface{}) error {
+func (cfg *SqliteConfig) CreateTable(tname string, stu interface{}) error {
 	var cmd string
 	backcmd, err := cfg.ReadCreateTableCmd(tname)
 	if err != nil {
@@ -82,7 +82,7 @@ func (cfg *sqliteConfig) CreateTable(tname string, stu interface{}) error {
 // ToDo
 // tname(string) : 作成するテーブル名
 // stu(interface{}) : 作成するテーブル内の構造体
-func (cfg *sqliteConfig) UpdateTable(tname string, stu interface{}, slice interface{}) error {
+func (cfg *SqliteConfig) UpdateTable(tname string, stu interface{}, slice interface{}) error {
 	return nil
 	var cmd string
 	backcmd, err := cfg.ReadCreateTableCmd(tname)
@@ -138,7 +138,7 @@ func (cfg *sqliteConfig) UpdateTable(tname string, stu interface{}, slice interf
 // (*cfg)ReadTableList() = []string, error
 //
 // SQL内のテーブル名を取得
-func (cfg *sqliteConfig) ReadTableList() ([]string, error) {
+func (cfg *SqliteConfig) ReadTableList() ([]string, error) {
 	var output []string
 	cmd, err := readTableAllCmd()
 	if err != nil {
@@ -166,7 +166,7 @@ func (cfg *sqliteConfig) ReadTableList() ([]string, error) {
 // SQL内の作成したテーブルのコマンド情報を取得
 //
 // tname(string) : 読み取り対象のテーブル
-func (cfg *sqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
+func (cfg *SqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
 	var output string
 	cmd, err := readCreateTableCmd(tname)
 	if err != nil {
@@ -193,7 +193,7 @@ func (cfg *sqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
 // SQL内のテーブルを削除する
 //
 // tname(string) : 削除対象のテーブル
-func (cfg *sqliteConfig) DropTable(tname string) error {
+func (cfg *SqliteConfig) DropTable(tname string) error {
 	cmd, err := dropTableCmd(tname)
 	if err != nil {
 		return err

@@ -14,7 +14,7 @@ import (
 //
 // tname(string) : 対象のテーブル名
 // str(interface{}) : データを書き換えるための構造体のポインタ
-func (cfg *sqliteConfig) Update(tname string, str interface{}) error {
+func (cfg *SqliteConfig) Update(tname string, str interface{}) error {
 	cmd, err := createUpdateCmd(tname, str)
 	if err != nil {
 		return err

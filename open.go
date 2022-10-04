@@ -6,25 +6,25 @@ import (
 	_ "github.com/mattn/go-sqlite3" //sqliteを使用しているので
 )
 
-// sqliteConfig SQLiteのテーブル設定
-type sqliteConfig struct {
+// SqliteConfig SQLiteのテーブル設定
+type SqliteConfig struct {
 	filepass string  // ファイルパス
 	db       *sql.DB // 開いたデータベースの値
 }
 
-// Setup sqliteConfig=Setup(filepath)
+// Setup SqliteConfig=Setup(filepath)
 //
 // 基本セットアップ
 //
 // filepath(string): sqlite3のデータベースパス
-func Setup(filepath string) sqliteConfig {
-	return sqliteConfig{filepass: filepath}
+func Setup(filepath string) SqliteConfig {
+	return SqliteConfig{filepass: filepath}
 }
 
 // (*cfg)Open()
 //
 // SQLiteのファイルを開く
-func (cfg *sqliteConfig) Open() error {
+func (cfg *SqliteConfig) Open() error {
 	var err error
 	cfg.db, err = sql.Open("sqlite3", cfg.filepass)
 	return err
@@ -33,7 +33,7 @@ func (cfg *sqliteConfig) Open() error {
 // (*cfg)Close()
 //
 // SQLiteのファイルを閉じる
-func (cfg *sqliteConfig) Close() error {
+func (cfg *SqliteConfig) Close() error {
 	return cfg.db.Close()
 
 }
@@ -41,4 +41,4 @@ func (cfg *sqliteConfig) Close() error {
 // (*cfg)ReturnFilePass()
 //
 // ファイルパスの読み取り
-func (cfg *sqliteConfig) ReturnFilePass() string { return cfg.filepass }
+func (cfg *SqliteConfig) ReturnFilePass() string { return cfg.filepass }
