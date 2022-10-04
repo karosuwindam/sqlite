@@ -14,7 +14,7 @@ import (
 //
 // tname(string) : テーブル名
 // tabledatap(interface{}) :テーブルに追加する構造体データのポインタ
-func (cfg *sqliteConfig) Add(tname string, tabledatap interface{}) error {
+func (cfg *SqliteConfig) Add(tname string, tabledatap interface{}) error {
 	pv := reflect.ValueOf(tabledatap)
 	if pv.Kind() != reflect.Ptr {
 		return errors.New("tabledatap input not pointer")
@@ -46,7 +46,7 @@ func (cfg *sqliteConfig) Add(tname string, tabledatap interface{}) error {
 //
 // tname(string) : テーブル名
 // tabledatap(interface{}) :テーブルに追加する構造体データのポインタ
-func (cfg *sqliteConfig) addOne(tname string, tabledatap interface{}) error {
+func (cfg *SqliteConfig) addOne(tname string, tabledatap interface{}) error {
 	cangeDbID(cfg.sqlite3IdMax(tname), tabledatap)
 	// tabledata := reflect.ValueOf(tabledatap).Elem().Interface()
 
@@ -121,7 +121,7 @@ func createaddCmdByID(tname string, ptabledata interface{}) (string, error) {
 // 対象のSQLテーブルからKey名idの最大値に+1した値を返す
 //
 // tname : 対象のテーブル
-func (cfg *sqliteConfig) sqlite3IdMax(tname string) int {
+func (cfg *SqliteConfig) sqlite3IdMax(tname string) int {
 	id := 0
 	cmd := "select max(id) from " + string(tname)
 	rows, err := cfg.db.Query(cmd)

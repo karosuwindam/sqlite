@@ -35,7 +35,7 @@ const (
 // v : map[string]stringまたは、keytypeの値を設定する
 // v(map[string]string):検索対象のキーワード、空白は検索しない
 // keytype(KeyWordOption):検索オプション (sqlite.AND or sqlite.OR or sqlite.ANDLike or sqlite.ORLike)
-func (cfg *sqliteConfig) Read(tname string, slice interface{}, v ...interface{}) error {
+func (cfg *SqliteConfig) Read(tname string, slice interface{}, v ...interface{}) error {
 	cmd, err := createReadCmd(tname, slice, v...)
 	if err != nil {
 		return err

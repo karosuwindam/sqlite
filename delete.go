@@ -8,7 +8,7 @@ import "strconv"
 //
 // tname:id指定するための参照テーブル
 // id:削除指定を出すID
-func (cfg *sqliteConfig) Delete(tname string, id int) error {
+func (cfg *SqliteConfig) Delete(tname string, id int) error {
 	cmd, err := createDelCmd(tname, id)
 	if err != nil {
 		return err
