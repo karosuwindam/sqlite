@@ -76,6 +76,7 @@ func mapToStruct(s map[string]interface{}, i interface{}) error {
 	}
 	out := vStruct.Elem()
 	v := sv.Elem()
+	v = reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem()
 	v.Set(reflect.Append(v, out))
 	return nil
 }
