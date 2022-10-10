@@ -127,3 +127,74 @@ func TestTableRead(t *testing.T) {
 	t.Log("table data read OK")
 
 }
+
+func TestReadWhileTime(t *testing.T) {
+	type TableTest struct {
+		Id  int    `db:"id"`
+		Str string `db:"str"`
+		I   int    `db:"i"`
+	}
+
+	testtablename := "test"
+	testdbname := "test.db"
+
+	sql := Setup(testdbname)
+	_ = sql.Open()
+	defer sql.Close()
+	sql.CreateTable(testtablename, TableTest{})
+	defer os.Remove(testdbname)
+	nowtime := time.Now()
+	cmdbase := "INSERT INTO " + testtablename
+	cmdback := " (" + "id,str,i,created_at,updated_at) VALUES (" + "1,'a',0,'" + nowtime.Format(TimeLayout) + "','" + nowtime.Format(TimeLayout) + "'" + ")"
+
+	if _, err := sql.db.Exec(cmdbase + cmdback); err != nil {
+		t.Fatalf(err.Error())
+		t.FailNow()
+	}
+	cmdback = " (" + "id,str,i,created_at,updated_at) VALUES (" + "2,'b',0,'" + nowtime.Add(-24*time.Hour*6).Format(TimeLayout) + "','" + nowtime.Add(-24*time.Hour*6).Format(TimeLayout) + "'" + ")"
+	if _, err := sql.db.Exec(cmdbase + cmdback); err != nil {
+		t.Fatalf(err.Error())
+		t.FailNow()
+	}
+	cmdback = " (" + "id,str,i,created_at,updated_at) VALUES (" + "3,'c',0,'" + nowtime.Add(-24*time.Hour*29).Format(TimeLayout) + "','" + nowtime.Add(-24*time.Hour*29).Format(TimeLayout) + "'" + ")"
+	if _, err := sql.db.Exec(cmdbase + cmdback); err != nil {
+		t.Fatalf(err.Error())
+		t.FailNow()
+	}
+	cmdback = " (" + "id,str,i,created_at,updated_at) VALUES (" + "4,'d',0,'" + nowtime.Add(-24*time.Hour*31).Format(TimeLayout) + "','" + nowtime.Add(-24*time.Hour*31).Format(TimeLayout) + "'" + ")"
+	if _, err := sql.db.Exec(cmdbase + cmdback); err != nil {
+		t.Fatalf(err.Error())
+		t.FailNow()
+	}
+	rdata := []TableTest{}
+	if err := sql.ReadToday(testtablename, &rdata); err == nil {
+		if len(rdata) == 1 {
+			t.Log(rdata)
+		} else {
+			t.Fail()
+		}
+	} else {
+		t.Fatal(err.Error())
+	}
+	rdata = []TableTest{}
+	if err := sql.ReadToWeek(testtablename, &rdata); err == nil {
+		if len(rdata) == 2 {
+			t.Log(rdata)
+		} else {
+			t.Fail()
+		}
+	} else {
+		t.Fatal(err.Error())
+	}
+	rdata = []TableTest{}
+	if err := sql.ReadToMonth(testtablename, &rdata); err == nil {
+		if len(rdata) == 3 {
+			t.Log(rdata)
+		} else {
+			t.Fail()
+		}
+	} else {
+		t.Fatal(err.Error())
+	}
+
+}
