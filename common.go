@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	// TimeLayout1 String変換用テンプレート
+	// TimeLayout String変換用テンプレート
 	TimeLayout = "2006-01-02 15:04:05.999999999"
 	// TimeLayout2 String変換用テンプレート
 	TimeLayout2 = "2006-01-02 15:04:05.99999999 +0000 UTC"
@@ -76,7 +76,6 @@ func mapToStruct(s map[string]interface{}, i interface{}) error {
 	}
 	out := vStruct.Elem()
 	v := sv.Elem()
-	v = reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem()
 	v.Set(reflect.Append(v, out))
 	return nil
 }

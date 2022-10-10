@@ -64,6 +64,58 @@ func (cfg *SqliteConfig) Read(tname string, slice interface{}, v ...interface{})
 	return err
 }
 
+// ReadToday 日間の更新分データ
+func (cfg *SqliteConfig) ReadToday(tname string, slice interface{}, v ...interface{}) error {
+	return cfg.readWhileTime(tname, slice, "today")
+}
+
+// ReadToWeek 週間の更新分データ
+func (cfg *SqliteConfig) ReadToWeek(tname string, slice interface{}, v ...interface{}) error {
+	return cfg.readWhileTime(tname, slice, "toweek")
+}
+
+// ReadToMonth 月間の更新分データ
+func (cfg *SqliteConfig) ReadToMonth(tname string, slice interface{}, v ...interface{}) error {
+	return cfg.readWhileTime(tname, slice, "tomonth")
+}
+
+// (*cfg)readWhileTime(tname, slice, v...) == error
+//
+// SQLiteから時間指定の更新のデータを読み取る
+//
+// tname(string):読み取り対象をテーブル名
+// slice(*[]interface{}):読み取ったデータを格納する変数、ポインタ配列として入力
+//
+// v : 何を入力しても無効
+func (cfg *SqliteConfig) readWhileTime(tname string, slice interface{}, v ...interface{}) error {
+	cmd, err := createReadDayCmd(tname, slice, v...)
+	if err != nil {
+		return err
+	}
+	rows, err := cfg.db.Query(cmd)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		data, err := sqlite3RowsReadData(slice)
+		if err != nil {
+			return err
+		}
+		err = rows.Scan(data...)
+		if err != nil {
+			return err
+		}
+		tmpdata, err1 := silceToMap(data, slice)
+		if err1 != nil {
+			return err1
+		}
+		mapToStruct(tmpdata, slice)
+	}
+
+	return err
+}
+
 // createReadCmd(tname,stu,v...) = string,error
 //
 // 読み取り用のコマンドを作るコマンド
@@ -105,6 +157,42 @@ func createReadCmd(tname string, slice interface{}, v ...interface{}) (string, e
 
 	}
 
+	return cmd, nil
+}
+
+// createReadDayCmd(tname,stu,v...) = string,error
+//
+// 日付指定の読み取り用のコマンドを作るコマンド
+//
+// tname(string) : 読み取り対象のテーブル
+// slice(*[]interface{}) : 検索対象の指定用
+// v(string) : today, toweek, tomonth
+func createReadDayCmd(tname string, slice interface{}, v ...interface{}) (string, error) {
+	if len(v) < 1 {
+		return "", errors.New("input type err")
+	}
+	if reflect.TypeOf(v[0]).Kind() != reflect.String {
+		return "", errors.New("input type err :" + reflect.TypeOf(v[0]).Kind().String())
+	}
+	cmd := "SELECT * FROM" + " " + tname
+	nowtime := time.Now()
+	switch v[0].(string) {
+	case "today":
+		cmd += " " + "WHERE " + "updated_at "
+		cmd += "BETWEEN '" + nowtime.Format("2006-01-02") + "' AND '"
+		cmd += nowtime.Add(24*time.Hour).Format("2006-01-02") + "'"
+	case "toweek":
+		cmd += " " + "WHERE " + "updated_at "
+		cmd += "BETWEEN '" + nowtime.Add(-24*time.Hour*7).Format("2006-01-02") + "' AND '"
+		cmd += nowtime.Add(24*time.Hour).Format("2006-01-02") + "'"
+	case "tomonth":
+		cmd += " " + "WHERE " + "updated_at "
+		cmd += "BETWEEN '" + nowtime.Add(-24*time.Hour*30).Format("2006-01-02") + "' AND '"
+		cmd += nowtime.Add(24*time.Hour).Format("2006-01-02") + "'"
+	default:
+		return "", errors.New("input err :" + v[0].(string))
+
+	}
 	return cmd, nil
 }
 
