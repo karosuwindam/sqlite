@@ -99,6 +99,10 @@ func createaddCmdByID(tname string, ptabledata interface{}) (string, error) {
 				cmdVaule += strconv.Itoa(fvi.(int))
 			case string:
 				cmdVaule += "'" + fvi.(string) + "'"
+			case float32:
+				cmdVaule += strconv.FormatFloat(float64(fvi.(float32)), 'f', -1, 32)
+			case float64:
+				cmdVaule += strconv.FormatFloat(fvi.(float64), 'f', -1, 64)
 			case time.Time:
 				cmdVaule += "'" + fvi.(time.Time).Format(TimeLayout) + "'"
 			}

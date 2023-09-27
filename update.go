@@ -10,7 +10,7 @@ import (
 
 // (*cfg)Update(tname str) = error
 //
-// SQLiteのデータベースから登録してあるデータを書き換える
+// # SQLiteのデータベースから登録してあるデータを書き換える
 //
 // tname(string) : 対象のテーブル名
 // str(interface{}) : データを書き換えるための構造体のポインタ
@@ -25,7 +25,7 @@ func (cfg *SqliteConfig) Update(tname string, str interface{}) error {
 
 // createUpdateCmd(tname, str) = string
 //
-// SQLite用の更新コマンドを作る
+// # SQLite用の更新コマンドを作る
 //
 // tname(string) : 対象のテーブル名
 // str(interface{}) : データを書き換えるための構造体
@@ -67,6 +67,12 @@ func createUpdateCmd(tname string, ptabledata interface{}) (string, error) {
 			flag = true
 		case string:
 			cmd += " " + f.Tag.Get("db") + "=" + "'" + v.(string) + "'"
+			flag = true
+		case float32:
+			cmd += " " + f.Tag.Get("db") + "=" + strconv.FormatFloat(float64(v.(float32)), 'f', -1, 32)
+			flag = true
+		case float64:
+			cmd += " " + f.Tag.Get("db") + "=" + strconv.FormatFloat(v.(float64), 'f', -1, 64)
 			flag = true
 		case time.Time:
 			cmd += " " + f.Tag.Get("db") + "=" + "'" + v.(time.Time).Format(TimeLayout) + "'"

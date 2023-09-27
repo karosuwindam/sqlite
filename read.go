@@ -9,15 +9,15 @@ import (
 	"unsafe"
 )
 
-//KeyWordOption 検索オプション
+// KeyWordOption 検索オプション
 type KeyWordOption string
 
-//検索オプションの値
+// 検索オプションの値
 //
-//AND keyword=data and
-//OR keyword=data or
-//AND_Like keyword like %keyword% and
-//OR_LIKE keyword like %keyword% or
+// AND keyword=data and
+// OR keyword=data or
+// AND_Like keyword like %keyword% and
+// OR_LIKE keyword like %keyword% or
 const (
 	AND     KeyWordOption = "and"
 	OR      KeyWordOption = "or"
@@ -27,7 +27,7 @@ const (
 
 // (*cfg)Read(tname, slice, v...) == error
 //
-// SQLiteからデータを読み取る
+// # SQLiteからデータを読み取る
 //
 // tname(string):読み取り対象をテーブル名
 // slice(*[]interface{}):読み取ったデータを格納する変数、ポインタ配列として入力
@@ -81,7 +81,7 @@ func (cfg *SqliteConfig) ReadToMonth(tname string, slice interface{}, v ...inter
 
 // (*cfg)readWhileTime(tname, slice, v...) == error
 //
-// SQLiteから時間指定の更新のデータを読み取る
+// # SQLiteから時間指定の更新のデータを読み取る
 //
 // tname(string):読み取り対象をテーブル名
 // slice(*[]interface{}):読み取ったデータを格納する変数、ポインタ配列として入力
@@ -198,7 +198,7 @@ func createReadDayCmd(tname string, slice interface{}, v ...interface{}) (string
 
 // sqlite3RowsReadData(slice) = []interface{},error
 //
-// SQLiteから読み取ったデータを格納する変数を作る
+// # SQLiteから読み取ったデータを格納する変数を作る
 //
 // slice(*[]interface{}) : 変換もとになる構造体配列
 func sqlite3RowsReadData(slice interface{}) ([]interface{}, error) {
@@ -223,6 +223,12 @@ func sqlite3RowsReadData(slice interface{}) ([]interface{}, error) {
 			output = append(output, &i)
 		case reflect.String:
 			str := string("")
+			output = append(output, &str)
+		case reflect.Float64:
+			str := float64(0)
+			output = append(output, &str)
+		case reflect.Float32:
+			str := float32(0)
 			output = append(output, &str)
 		case reflect.Struct:
 			// str := string("")
@@ -282,6 +288,10 @@ func silceToMap(silce []interface{}, stu interface{}) (map[string]interface{}, e
 				output[f.Name] = tmp.(int)
 			case string:
 				output[f.Name] = tmp.(string)
+			case float64:
+				output[f.Name] = tmp.(float64)
+			case float32:
+				output[f.Name] = tmp.(float32)
 			case time.Time:
 				output[f.Name] = tmp.(time.Time)
 			}

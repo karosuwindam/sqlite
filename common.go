@@ -64,6 +64,14 @@ func mapToStruct(s map[string]interface{}, i interface{}) error {
 			if reflect.String == reflect.TypeOf(ss).Kind() {
 				v.SetString(ss.(string))
 			}
+		case reflect.Float64:
+			if reflect.Float64 == reflect.TypeOf(ss).Kind() {
+				v.SetFloat(ss.(float64))
+			}
+		case reflect.Float32:
+			if reflect.Float32 == reflect.TypeOf(ss).Kind() {
+				v.SetFloat(float64(ss.(float32)))
+			}
 		case reflect.Struct:
 			//時刻処理
 			if ss != nil && timeKind == f.Type.Kind() {
