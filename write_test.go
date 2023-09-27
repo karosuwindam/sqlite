@@ -9,9 +9,10 @@ import (
 func TestTableWrite(t *testing.T) {
 
 	type TableTest struct {
-		Id  int    `db:"id"`
-		Str string `db:"str"`
-		I   int    `db:"i"`
+		Id    int     `db:"id"`
+		Str   string  `db:"str"`
+		Float float64 `db:"float"`
+		I     int     `db:"i"`
 	}
 
 	testtablename := "test"
@@ -24,7 +25,7 @@ func TestTableWrite(t *testing.T) {
 	defer os.Remove(testdbname)
 
 	t.Log("-----------Add data ---------------")
-	wdata := TableTest{Id: 10, Str: "data", I: 500}
+	wdata := TableTest{Id: 10, Str: "data", I: 500, Float: 1.2345}
 	err := sql.Add(testtablename, &wdata)
 	if err != nil {
 		t.Errorf("Don't Added %v Table", testtablename)
