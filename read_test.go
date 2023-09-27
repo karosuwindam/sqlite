@@ -51,10 +51,11 @@ func TestTableCreateReadCmd(t *testing.T) {
 func TestTableRead(t *testing.T) {
 
 	type TableTest struct {
-		Id   int       `db:"id"`
-		Str  string    `db:"str"`
-		I    int       `db:"i"`
-		time time.Time `db:"time"`
+		Id    int       `db:"id"`
+		Str   string    `db:"str"`
+		I     int       `db:"i"`
+		Float float64   `db:"float"`
+		time  time.Time `db:"time"`
 	}
 
 	testtablename := "test"
@@ -68,7 +69,7 @@ func TestTableRead(t *testing.T) {
 
 	ckdata := []TableTest{}
 
-	wdata := TableTest{Id: 1, Str: "data", I: 500}
+	wdata := TableTest{Id: 1, Str: "data", I: 500, Float: 1.1, time: time.Now()}
 	for i := 0; i < 20; i++ {
 		wdata.I += i
 		wdata.time = time.Now()

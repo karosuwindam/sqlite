@@ -19,7 +19,7 @@ const (
 
 // (*cfg)CreateTable(tname, stu) = error
 //
-// SQL内にテーブルを作成する
+// # SQL内にテーブルを作成する
 //
 // tname(string) : 作成するテーブル名
 // stu(interface{}) : 作成するテーブル内の構造体
@@ -77,7 +77,7 @@ func (cfg *SqliteConfig) CreateTable(tname string, stu interface{}) error {
 
 // (*cfg)CreateTable(tname, stu) = error
 //
-// SQL内にテーブルを更新する処理
+// # SQL内にテーブルを更新する処理
 //
 // ToDo
 // tname(string) : 作成するテーブル名
@@ -163,7 +163,7 @@ func (cfg *SqliteConfig) ReadTableList() ([]string, error) {
 
 // (*cfg)ReadCreateTableCmd(tname) = string, error
 //
-// SQL内の作成したテーブルのコマンド情報を取得
+// # SQL内の作成したテーブルのコマンド情報を取得
 //
 // tname(string) : 読み取り対象のテーブル
 func (cfg *SqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
@@ -190,7 +190,7 @@ func (cfg *SqliteConfig) ReadCreateTableCmd(tname string) (string, error) {
 
 // (*cfg)DropTable(tname) = error
 //
-// SQL内のテーブルを削除する
+// # SQL内のテーブルを削除する
 //
 // tname(string) : 削除対象のテーブル
 func (cfg *SqliteConfig) DropTable(tname string) error {
@@ -239,6 +239,9 @@ func createTableCmd(tname string, stu interface{}, flag ifnot) (string, error) {
 		case reflect.String:
 			tmp = f.Tag.Get("db")
 			cmd += "\"" + tmp + "\" varchar"
+		case reflect.Float32, reflect.Float64:
+			tmp = f.Tag.Get("db")
+			cmd += "\"" + tmp + "\" real"
 		case timeKind:
 			tmp = f.Tag.Get("db")
 			cmd += "\"" + tmp + "\" datetime"
@@ -289,7 +292,7 @@ func altertableCmd(cmdA, cmdB string) []string {
 	return output
 }
 
-//updateTableAnabledCk(dataA,dataB) = bool
+// updateTableAnabledCk(dataA,dataB) = bool
 //
 // mapデータを比較して、dataAの情報がdataBにすべて含まれていることを確認
 // dataA(map[string]string) : 元のデータ
@@ -308,7 +311,7 @@ func updateTableAnabledCk(dataA, dataB map[string]string) bool {
 
 // createSqlTableAna(cmd) = string, map[string]string
 //
-// Table作成のSQLコマンドを解析して、テーブルとkey名と型のMapデータを作る
+// # Table作成のSQLコマンドを解析して、テーブルとkey名と型のMapデータを作る
 //
 // cmd(string) : 解析用のコマンド
 func createSqlTableAna(cmd string) (string, map[string]string) {
@@ -352,7 +355,7 @@ func createSqlTableAna(cmd string) (string, map[string]string) {
 
 // createAlterTableCmd(tname,bKey,aKey,tdata) = string
 //
-// SQLite用のテーブルのカラム追加コマンドを作成
+// # SQLite用のテーブルのカラム追加コマンドを作成
 //
 // tname(string) : 対象のテーブル
 // bKey(string) : 挿入対象の前Key名
@@ -385,7 +388,7 @@ func readTableAllCmd() (string, error) {
 
 // readCreateTableCmd() = string, error
 //
-// SQLiteに登録してあるテーブルを作成したコマンドを読み取るSQLコマンドを作る
+// # SQLiteに登録してあるテーブルを作成したコマンドを読み取るSQLコマンドを作る
 //
 // tname(string) : 読み取り対象となるテーブル
 func readCreateTableCmd(tname string) (string, error) {

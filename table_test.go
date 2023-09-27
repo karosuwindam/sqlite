@@ -98,12 +98,13 @@ func TestTableCreateCmd(t *testing.T) {
 	}
 
 	type TableTest1 struct {
-		Id   int    `db:"id"`
-		Str  string `db:"str"`
-		Strb string `db:"strb"`
-		I    int    `db:"i"`
-		B    int    `db:"b"`
-		C    int    `db:"c"`
+		Id    int     `db:"id"`
+		Str   string  `db:"str"`
+		Strb  string  `db:"strb"`
+		float float64 `db:"float"`
+		I     int     `db:"i"`
+		B     int     `db:"b"`
+		C     int     `db:"c"`
 	}
 
 	tname := "test"
